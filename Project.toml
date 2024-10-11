@@ -3,7 +3,22 @@ uuid = "1056f34f-fc0f-4ad4-82c7-af0992e93bac"
 authors = ["josePereiro <jose.pereiro.personal@gmail.com> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+Bloberias = "c7313018-426c-4109-b567-6f433e2229c2"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+DataFileNames = "82dba31a-8ab6-430f-a22d-9cbb81344561"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+Gurobi = "2e9cd046-0924-5485-92f1-d5272153d98b"
+MetX = "01815447-a018-4668-9805-89f51b3fc6a1"
+NDHistograms = "c9719566-2c26-451b-95bc-5aa9e2747dfa"
+ProjFlows = "cac8b402-4888-4912-9502-a4f91500dd77"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
 [compat]
+CairoMakie = "=0.12.10"
 julia = "1.10"
 
 [extras]
