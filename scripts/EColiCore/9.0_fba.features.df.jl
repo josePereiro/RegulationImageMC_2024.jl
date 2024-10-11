@@ -18,24 +18,36 @@ include("1.0_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
-    # netid = "ecoli_core"
-    netid = "ecoli_core_Beg2007"
-    net0_globs = blob(B, "$(netid).globals")
-    hnd_globs = blob!(B, "$(netid).hit.and.down.globals")
+    # meta
+    script_version = v"0.1.0"
+    
+    # hyper-params
+    
+    # globals blobs
+    sim_globs = blob(B, "sim.globals")
+    
+    net0_globs_id = sim_globs["net0.globals.id"]::String
+    net0_globs = blob(B, net0_globs_id)
 
-    iidxs_pool0 = hnd_globs[Vector{Int}, "iidxs_pool0"]
-    blep0 = net0_globs["net0.blep0"]
+    netid = net0_globs["net0.netid"]::String
+    @show netid
+
+    hnd_id = sim_globs["hit.and.down.id"]
+    hnd_globs_id = "$(netid).$(hnd_id).globals"
+    hnd_globs = blob!(B, hnd_globs_id)
+    iidxs_pool0 = hnd_globs["iidxs_pool0"]::Vector{Int}
+    blep0 = net0_globs["net0.blep0"]::LEPModel
+
     
     objid = extras(blep0, "BIOM")
     glc_id = extras(blep0, "EX_GLC")
     glc_idx = colindex(blep0, glc_id)
     objidx = colindex(blep0, objid)
     lb0, ub0 = lb(blep0), ub(blep0)
-    # TODO: add to globals
-    exch_ids = ["EX_glc__D_e", "EX_lac__D_e", "EX_malt_e", "EX_gal_e", "EX_glyc_e", "EX_ac_e"]
+    # TODO: use to globals
+    exch_ids = ["EX_glc__D_e"]
     exch_idxs = colindex(blep0, exch_ids)
     
-
     nrxns = size(blep0, 2)
     nirxns = length(iidxs_pool0)
     opm = FBAOpModel(blep0, LP_SOLVER)
@@ -61,7 +73,7 @@ let
     
     # df batch creation
     nrows = 0
-    nrows_per_df = 10_000
+    nrows_per_df = 50_000
     max_nrows = Inf
 
     # reset

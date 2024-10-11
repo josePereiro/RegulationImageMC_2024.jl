@@ -20,16 +20,6 @@ include("1.0_sim.base.jl")
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # DOING: to reduce preassure on memory, implement a Circular buffer to check 
 # for very common duplications. We just ignore and do not record them on disk...
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
-
-# TODO: create a multifile raBlob system
-# - blob!(B, "globals", "ecoli_core", "net0") will create/load "ecoli_core.globals.net0.jls" file
-# - blob!(B, "globals", "ecoli_core", "net0.elep0")
-# - blob!(B, "globals", "ecoli_core") will create/load all files matching
-# - a raBlob might target multiple files
-# - One complexity is that at setindex/serialization you must decide where to write the new data
-# - The goal is to create a frame kind of structure to separate heavy objs into diferent files
-
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
@@ -47,9 +37,11 @@ let
     netid = net0_globs["net0.netid"]::String
     @show netid
     
-    hnd_id = "hit.and.down"
+    hnd_id = "hit.and.down" # TO SYNC
+    sim_globs[string(hnd_id, ".id")] = hnd_id
     hnd_globs_id = "$(netid).$(hnd_id).globals"
     hnd_globs = blob!(B, hnd_globs_id)
+
 
     # Reset (uncomment to reset)
     # rm(hnd_globs) 
