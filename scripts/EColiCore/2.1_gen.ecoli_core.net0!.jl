@@ -22,7 +22,7 @@ let
     net0 = pull_net(netid)
     @show netid
     @show size(net0)
-
+    
     # set glc exchange
     # It should be the only carbon source open
     exch_ids = ["EX_glc__D_e"]
@@ -36,6 +36,7 @@ let
 
     # create netid globals
     _net0_globals!(net0_globs, net0)
+    net0_globs["scope"] = @litescope
     serialize(net0_globs)
     
     # up sim globals

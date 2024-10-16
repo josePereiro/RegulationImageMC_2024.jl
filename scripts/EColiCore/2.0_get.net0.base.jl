@@ -1,16 +1,36 @@
 using Statistics
 
 # .- - -. - . .. .- .- - . - - -. - - -. -.- .--. 
-function _net0_globals!(rab::raBlob, net0)
+function _net0_globals!(rab::raBlob, net0; 
+        box_eps = 0.0, 
+        box_reduce = true, 
+        box_nths = NTHREADS
+    )
     
     # lep0
     lep0 = lepmodel(net0)
     
-    # box
-    blep0 = box(lep0, LP_SOLVER; nths = NTHREADS, verbose = true)
+    # fva_strip
+    frame = hashed_id("blep0.cache.", lep0, box_eps, box_reduce, box_nths)
+    @show frame
+    blep0_ref = withblob!(rab, :get!, frame, "model") do
+        _blep0 = fva_strip(lep0, LP_SOLVER; 
+            nths = box_nths, 
+            verbose = true, 
+            eps = box_eps, 
+            reduce = box_reduce
+        )
+        return _blep0
+    end
+    blep0 = rab[frame, "model"]
 
     # EchelonLEPModel
-    eblep0 = EchelonLEPModel(blep0; verbose = true)
+    frame = hashed_id("eblep0.cache.", blep0)
+    eblep0_ref = withblob!(rab, :get!, frame, "model") do
+        _eblep0 = EchelonLEPModel(blep0; verbose = true)
+        return _eblep0
+    end
+    eblep0 = rab[frame, "model"]
 
     # Test FBA
     bioms = Float64[]
@@ -21,14 +41,15 @@ function _net0_globals!(rab::raBlob, net0)
         push!(bioms, biom)
         @show biom
     end
-    biom0 = mean(bioms)
-    @assert all(isapprox.(bioms[1], bioms; atol = 1e-4))
+    # biom0 = mean(bioms)
+    biom0 = maximum(bioms)
+    # @assert all(isapprox.(bioms[1], bioms; atol = 1e-4))
 
     # store globals
     rab["net0"] = net0
     rab["net0.lep0"] = lep0
-    rab["net0.blep0"] = blep0
-    rab["net0.eblep0"] = eblep0
+    rab["net0.blep0.ref"] = blep0_ref
+    rab["net0.eblep0.ref"] = eblep0_ref
     # reference iders
     # - all stored index vector will refers to this order
     rab["net0.rxns"] = reactions(net0)

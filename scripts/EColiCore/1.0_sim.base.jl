@@ -75,4 +75,15 @@ function unordered_hash(vec)
 end
 
 # ..- .- -. -. -. - . -. --. .-.-......- - 
+# TODO: Move to ProjFlows
+function hashed_id(s::String, args...)
+    h0 = hash(0)
+    for a in args
+        h0 = hash(a, h0)
+    end
+    return string(s, h0)
+end
+
+
+# ..- .- -. -. -. - . -. --. .-.-......- - 
 nothing
