@@ -5,8 +5,10 @@ using Base.Threads
 
 # Gurobi
 import Gurobi
-GRB_ENV = Gurobi.Env()
-LP_SOLVER = () -> Gurobi.Optimizer(GRB_ENV)
+# GRB_ENV = Gurobi.Env()
+# LP_SOLVER = () -> Gurobi.Optimizer(GRB_ENV)
+
+LP_SOLVER = Clp.Optimizer
 
 # Gurobi
 NTHREADS = nthreads()
@@ -65,6 +67,7 @@ function check_duplicate!(t::HashTracker, h::UInt64)
     return false
 end
 
+
 # .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.
 function unordered_hash(vec)
     combined_hash = zero(UInt)
@@ -73,17 +76,6 @@ function unordered_hash(vec)
     end
     return combined_hash
 end
-
-# ..- .- -. -. -. - . -. --. .-.-......- - 
-# TODO: Move to ProjFlows
-function hashed_id(s::String, args...)
-    h0 = hash(0)
-    for a in args
-        h0 = hash(a, h0)
-    end
-    return string(s, h0)
-end
-
 
 # ..- .- -. -. -. - . -. --. .-.-......- - 
 nothing

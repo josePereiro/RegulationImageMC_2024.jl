@@ -9,6 +9,7 @@ function _net0_globals!(rab::raBlob, net0;
     
     # lep0
     lep0 = lepmodel(net0)
+    biom_id = extras(net0, "BIOM")
     
     # fva_strip
     frame = hashed_id("blep0.cache.", lep0, box_eps, box_reduce, box_nths)
@@ -20,6 +21,7 @@ function _net0_globals!(rab::raBlob, net0;
             eps = box_eps, 
             reduce = box_reduce
         )
+        linear_weights!(net0, biom_id, 1.0)
         return _blep0
     end
     blep0 = rab[frame, "model"]
@@ -28,6 +30,7 @@ function _net0_globals!(rab::raBlob, net0;
     frame = hashed_id("eblep0.cache.", blep0)
     eblep0_ref = withblob!(rab, :get!, frame, "model") do
         _eblep0 = EchelonLEPModel(blep0; verbose = true)
+        linear_weights!(net0, biom_id, 1.0)
         return _eblep0
     end
     eblep0 = rab[frame, "model"]

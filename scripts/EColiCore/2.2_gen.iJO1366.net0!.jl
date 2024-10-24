@@ -1,6 +1,7 @@
 @time begin
     using RegulationImageMC_2024
     using Gurobi
+    using Clp
     using ProjFlows
     using Base.Threads
 end
@@ -44,14 +45,14 @@ let
     _net0_globals!(net0_globs, net0; 
         box_eps = 1e-2, 
         box_reduce = false, 
-        box_nths = 1
+        box_nths = NTHREADS
     )
     net0_globs["scope"] = @litescope
     serialize(net0_globs)
     
     # up sim globals
     sim_globs = blob!(B, "sim.globals")
-    sim_globs["net0.globals.id"] = net0_globs_id
+    sim_globs["lite.scopes", basename(@__FILE__)] = @litescope
     serialize(sim_globs)
 
     nothing

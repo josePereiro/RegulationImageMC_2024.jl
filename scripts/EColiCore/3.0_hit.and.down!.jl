@@ -18,7 +18,7 @@ include("1.0_sim.base.jl")
 # - Each ensemble has a fixed enviromen
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# DOING: to reduce preassure on memory, implement a Circular buffer to check 
+# DOING/80%: to reduce preassure on memory, implement a Circular buffer to check 
 # for very common duplications. We just ignore and do not record them on disk...
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
@@ -37,11 +37,12 @@ let
     netid = net0_globs["net0.netid"]::String
     @show netid
     
+    # TODO: rename to account for sim.global
     hnd_id = "hit.and.down" # TO SYNC
-    sim_globs[string(hnd_id, ".id")] = hnd_id
-    hnd_globs_id = "$(netid).$(hnd_id).globals"
+    hnd_globs_id = "$(hnd_id).$(netid).globals"
     hnd_globs = blob!(B, hnd_globs_id)
 
+    return 
 
     # Reset (uncomment to reset)
     # rm(hnd_globs) 
@@ -49,8 +50,8 @@ let
 
     # duplicates
     # TODO make write/read frequent and locked
-    # Make it an struct wihch creates a global (rablob) in a given Bloberia
-    dups_buff = get!(hnd_globs, "local.kosets.duplicates.buffer") do
+    # Make it an struct which creates a global (rablob) in a given Bloberia
+    global dups_buff = get!(hnd_globs, "kosets.duplicates", "local.buffer") do
         HashTracker(50_000)
     end
     dups_count = 0
@@ -63,7 +64,7 @@ let
     objidx = colindex(net0, objid)
     feasible_th = 1e-2
     traj_lim = 35 # max length of trajectories
-    blep0 = net0_globs["net0.blep0"]::LEPModel
+    blep0 = net0_globs["net0.blep0.ref"][]
     lb0, ub0 = lb(blep0), ub(blep0)
     M, N = size(blep0)
     opm = FBAOpModel(blep0, LP_SOLVER)
@@ -78,20 +79,38 @@ let
     iidxs_pool0 = colindex(blep0, iids_pool0)
 
     # for each batch
-    for _batchi in 1:25
+    for _batchi in 1:10
+        @show _batchi
         
         # new BlobBatch
         hd_bb = headbatch!(B, hnd_id)
         if islocked(hd_bb) # ignore locked 
             hd_bb = blobbatch!(B, hnd_id)
         end
-        setmeta!(hd_bb, "blobs.lim", 1000)
+        setmeta!(hd_bb, "blobs.lim", 500)
         lock(hd_bb)
         
         downset = Int[]
         biomset = Float64[]
         __downfactors = ones(Float64, N)
         _downfactors = ones(Float64, N)
+
+        # refresh hnd_globs
+        lock(hnd_globs) do
+            # load disk version
+            _hnd_globs = blob(hnd_globs)
+            _dups_buff = get!(_hnd_globs, "kosets.duplicates", "local.buffer") do
+                HashTracker(50_000)
+            end
+            hash_set = dups_buff.hash_set
+            _hash_set = _dups_buff.hash_set
+            isempty(_hash_set) && return
+            length(hash_set) != length(_hash_set) && return
+            @info("REFRESH HASH_SET", hash_set_len = length(hash_set))
+            
+            push!(hash_set, _hash_set...)
+            serialize(hnd_globs, "kosets.duplicates")
+        end
 
         # for each run
         for _seti in 1:Int(1e10)
@@ -206,6 +225,8 @@ let
     # write globals
     hnd_globs["iidxs_pool0"] = iidxs_pool0
     serialize(hnd_globs)
+
+    sim_globs["lite.scopes", basename(@__FILE__)] = @litescope
     serialize(sim_globs)
 
     nothing
