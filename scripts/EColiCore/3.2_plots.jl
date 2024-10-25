@@ -2,117 +2,89 @@
     using Base.Threads
     using CairoMakie
     using NDHistograms
-    using Random
+    const At =  Base.Threads.Atomic
 end
-
-# --.-...- --. -. - -.-..- -- .-..- -. -. 
-# DOING: 
-# - make hit and run version
-# - reduce risk of duplicates
-
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
 include("1.0_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# down set lenght
-@time let
+# Trajectories
+let
+    # globals blobs
+    sim_globs = blob(B, "sim.globals")
+    hnd_globs_id = sim_globs["hnd.globals.id"]
+    hnd_globs = blob!(B, hnd_globs_id)
+    
+    f = Figure()
+    ax = Axis(f[1,1]; xlabel = "idx", ylabel = "biom")
 
-    netid = "ecoli_core"
-    biom0 = B["$(netid).globals"]["net0.biom0"]
-    @show biom0
+    for bb in eachbatch(B, hnd_globs_id)
+        @show bb.group
+        for b in bb
+            sim_status = b["sim_status"]
+            # downset = b["cargo.downset", "downset"]::Vector{Int}
+            biomset = b["cargo.biomset", "biomset"]::Vector{Float64} 
+            idxs = eachindex(biomset)
+            lines!(ax, idxs, biomset;
+                color = :black, alpha = 0.1
+            )
+            scatter!(ax, [last(idxs)], [last(biomset)];
+                color = :black, alpha = 1.0
+            )
+        end
+    end
+    f
+end
 
-    bbs = eachbatch(B, "hit.and.down")
-    _h0 = NDHistogram(
-        "downL" => 0:1000,
-        "biom" => range(0.0, 2.2; step = biom0 * 1e-2),
-        # "biom" => Float64,
-    )
-    ts = map(1:nthreads()) do _
-        @spawn begin
-            t_h = deepcopy(_h0)
-            for bb in bbs, b in bb
-                downset = b["cargo.downset", "downset"]
-                biomset = b["cargo.biomset", "biomset"]::Vector{Float64}
-                L = length(downset)
-                for idx in 1:L
-                    biom = biomset[idx]
-                    isfinite(biom) || continue
-                    count!(t_h, (idx, biom))
-                end
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+# lenght
+let
+    # globals blobs
+    sim_globs = blob(B, "sim.globals")
+    hnd_globs_id = sim_globs["hnd.globals.id"]
+    hnd_globs = blob!(B, hnd_globs_id)
+    
+    h0 = NDHistogram("koset.len" => 0:1000)
+
+    @time for bb in eachbatch(B, hnd_globs_id)
+        for b in bb
+            get(b, "duplicate.flag", false) && continue
+            biomset = b["cargo.biomset", "biomset"]
+            biomset_len = length(biomset)
+            count!(h0, (biomset_len, ), 1)
+        end
+    end
+
+    # Plots
+    @time xs, ws = hist_series(h0, "koset.len")
+
+    f = Figure()
+    ax = Axis(f[1,1]; xlabel = "koset.len", ylabel = "count")
+    scatter!(ax, xs, ws)
+    f
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+let
+    # globals blobs
+    sim_globs = blob(B, "sim.globals")
+    hnd_globs_id = sim_globs["hnd.globals.id"]
+
+    dup_count = At{Int}(0)
+    nondup_count = At{Int}(0)
+    @time foreach_batch(B, hnd_globs_id) do bb
+        for b in bb
+            if get(b, "duplicate.flag", false)
+                dup_count[] += 1
+            else
+                nondup_count[] += 1
             end
-            return t_h
-        end # @spawn
+        end
     end
 
-    # reduce
-    global h0 = deepcopy(_h0)
-    for t in ts
-        hi = fetch(t)
-        merge!(h0, hi)
-    end
-    
+    @show dup_count[]
+    @show nondup_count[]
     nothing
-end
-
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
-let
-    id = "biom"
-    # id = "downL"
-
-    h1 = marginal(h0, id)
-    f = Figure()
-    ax = Axis(f[1,1]; xlabel = id, ylabel = "count")
-    xs = collect(keys(h1, id))
-    # ys = map(log10, values(h1))
-    ys = collect(values(h1))
-    # @show xs[1:10]
-    barplot!(ax, xs, ys)
-    scatter!(ax, xs, ys)
-    f
-end
-
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# downregulation trajectories
-let
-    netid = "ecoli_core"
-    net0 = B["$(netid).globals"][MetNet, "net0"]
-    M, N = size(net0)
-
-    f = Figure()
-    ax = Axis(f[1,1]; 
-        xlabel = "downreg index",
-        ylabel = "rxn index",
-        limits = (nothing, nothing, 0, N)
-    )
-    
-    bb_ch = eachbatch(B, "hit.and.down"; sortfun = shuffle!)
-    ntrajs = Inf
-    c = 0
-    @time for bb in bb_ch, b in bb
-        # islocked(bb) && continue
-        downset = b[Vector{Int}, "cargo.downset", "downset"]
-        sort!(downset)
-        D = length(downset)
-        
-        # filters
-        D > 3 || continue
-        # 73 ∈ downset || continue
-        # downset[4] == 63 || continue
-
-        lines!(ax, 1:D, downset; 
-            color = :black, 
-            alpha = 0.05
-        )
-        # scatter!(ax, [D], [downset[end]]; 
-        #     color = :black, 
-        #     alpha = 0.01,
-        #     marker = :xcross,
-        #     markersize = 18
-        # )
-        c += 1
-        c < ntrajs || break
-    end
-    f
 end

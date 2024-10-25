@@ -49,6 +49,7 @@ let
     
     # up sim globals
     sim_globs = blob!(B, "sim.globals")
+    sim_globs["net0.globals.id"] = net0_globs_id
     sim_globs["lite.scopes", basename(@__FILE__)] = @litescope
     serialize(sim_globs)
 

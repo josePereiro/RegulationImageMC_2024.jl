@@ -47,11 +47,11 @@ let
         box_reduce = false, 
         box_nths = NTHREADS
     )
-    net0_globs["scope"] = @litescope
     serialize(net0_globs)
     
     # up sim globals
     sim_globs = blob!(B, "sim.globals")
+    sim_globs["net0.globals.id"] = net0_globs_id
     sim_globs["lite.scopes", basename(@__FILE__)] = @litescope
     serialize(sim_globs)
 

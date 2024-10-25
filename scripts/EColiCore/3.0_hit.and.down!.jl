@@ -18,13 +18,9 @@ include("1.0_sim.base.jl")
 # - Each ensemble has a fixed enviromen
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# DOING/80%: to reduce preassure on memory, implement a Circular buffer to check 
-# for very common duplications. We just ignore and do not record them on disk...
-
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
     # meta
-    script_version = v"0.1.0"
+    script_version = v"0.2.0"
     
     # hyper-params
     
@@ -38,21 +34,21 @@ let
     @show netid
     
     # TODO: rename to account for sim.global
-    hnd_id = "hit.and.down" # TO SYNC
-    hnd_globs_id = "$(hnd_id).$(netid).globals"
+    hnd_prefix = "hit.and.down" # TO SYNC
+    hnd_globs_id = "$(hnd_prefix).$(netid).globals"
     hnd_globs = blob!(B, hnd_globs_id)
-
-    return 
+    sim_globs["hnd.globals.id"] = hnd_globs_id
 
     # Reset (uncomment to reset)
     # rm(hnd_globs) 
-    # foreach_batch(rm, B, hnd_id)
+    # foreach_batch(rm, B, hnd_globs_id)
 
     # duplicates
     # TODO make write/read frequent and locked
     # Make it an struct which creates a global (rablob) in a given Bloberia
+    dup_buff_size = 1_000_000
     global dups_buff = get!(hnd_globs, "kosets.duplicates", "local.buffer") do
-        HashTracker(50_000)
+        HashTracker(dup_buff_size)
     end
     dups_count = 0
     nondups_count = 0
@@ -79,13 +75,13 @@ let
     iidxs_pool0 = colindex(blep0, iids_pool0)
 
     # for each batch
-    for _batchi in 1:10
+    for _batchi in 1:15
         @show _batchi
         
         # new BlobBatch
-        hd_bb = headbatch!(B, hnd_id)
+        hd_bb = headbatch!(B, hnd_globs_id)
         if islocked(hd_bb) # ignore locked 
-            hd_bb = blobbatch!(B, hnd_id)
+            hd_bb = blobbatch!(B, hnd_globs_id)
         end
         setmeta!(hd_bb, "blobs.lim", 500)
         lock(hd_bb)
@@ -100,25 +96,23 @@ let
             # load disk version
             _hnd_globs = blob(hnd_globs)
             _dups_buff = get!(_hnd_globs, "kosets.duplicates", "local.buffer") do
-                HashTracker(50_000)
+                HashTracker(dup_buff_size)
             end
             hash_set = dups_buff.hash_set
             _hash_set = _dups_buff.hash_set
-            isempty(_hash_set) && return
-            length(hash_set) != length(_hash_set) && return
             @info("REFRESH HASH_SET", hash_set_len = length(hash_set))
             
-            push!(hash_set, _hash_set...)
+            isempty(_hash_set) || push!(hash_set, _hash_set...)
             serialize(hnd_globs, "kosets.duplicates")
         end
 
         # for each run
-        for _seti in 1:Int(1e10)
-
+        for _runi in 1:Int(1e10)
+            
             # random restarting point
             @label RANDOM_RESTART_POINT
-            L = length(downset)
-            rand_idx0 = rand(0:L)
+            L = length(downset) - 1
+            rand_idx0 = L < 1 ? 0 : rand(0:L)
             downset = iszero(rand_idx0) ? Int[] : downset[1:rand_idx0]
             biomset = iszero(rand_idx0) ? Float64[] : biomset[1:rand_idx0]
             __downfactors .= _downfactors
@@ -127,11 +121,12 @@ let
 
             # params
             sim_status = "RUNNING"
-            last_biom = 0.0
 
-            # origin model
-            lb!(opm, lb0)
-            ub!(opm, ub0)
+            last_biom = isempty(biomset) ? 0.0 : last(biomset)
+
+            # reset model
+            lb!(opm, lb0 .* _downfactors)
+            ub!(opm, ub0 .* _downfactors)
 
             # for each step
             for _downregi in 1:Int(1e10)
@@ -146,9 +141,11 @@ let
                     break
                 end
                 if isnothing(ridx) 
+                    # println("isnothing(ridx)")
                     sim_status = "ERROR.FAILED_STEP"
                     @goto END_TRAJ
                 end
+                
 
                 # change bounds
                 lbr = lb0[ridx] * _downfactors[ridx]
@@ -158,10 +155,11 @@ let
                 ub!(opm, ridx, ubr)
 
                 # optimize
-                try; optimize!(opm) 
+                try; optimize!(opm)
                     last_biom = solution(opm, objidx)
                     push!(biomset, last_biom)
                     catch err; 
+                        # println("catch err;")
                         sim_status = "ERROR.ONOPTIMIZATION"
                         push!(biomset, NaN)
                         @show(err)
@@ -170,31 +168,42 @@ let
                 # @show ridx
                 # @show last_biom
 
+                # check nan
+                if isnan(last_biom)
+                    # println("isnan(last_biom)")
+                    sim_status = "OBJ.NAN"
+                    @goto END_TRAJ
+                end
+
                 # feasibility check
                 if last_biom < feasible_th 
+                    # println("last_biom < feasible_th ")
                     sim_status = "UNFEASIBLE"
                     @goto END_TRAJ
                 end
                 
                 # end trajectory
                 @label END_TRAJ
-
+                
+                # continue if running
+                sim_status == "RUNNING" && continue
+                
                 # check dupplicate
                 koset_hash = unordered_hash(downset)
                 if check_duplicate!(dups_buff, koset_hash)
+                    # println("check_duplicate!(dups_buff, koset_hash)")
                     dups_count += 1
                     @goto RANDOM_RESTART_POINT
                 end
                 nondups_count += 1
 
-                # break
                 break
 
             end # for _downregi 
             
             # store
             b = blob!(hd_bb)
-            merge!(b, @litescope())
+            b["sim_status"] = sim_status
             b["cargo.downset", "downset"] = downset
             b["cargo.biomset", "biomset"] = biomset
             
@@ -206,17 +215,18 @@ let
                     bc,
                     dups_count,
                     nondups_count,
-                    dumps_frac = dups_count / nondups_count
+                    dups_frac = dups_count / nondups_count
                 )
             end
             
             isfullbatch(hd_bb) && @goto CLOSE_BATCH
 
-        end # for _seti
+        end # for _runi
 
         # finish
         @label CLOSE_BATCH
         setmeta!(hd_bb, "hit.and.down.version", script_version)
+        setmeta!(hd_bb, "lite.scope", @litescope)
         serialize(hd_bb)
         unlock(hd_bb)
 

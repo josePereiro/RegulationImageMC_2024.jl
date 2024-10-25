@@ -36,11 +36,11 @@ let
 
     # create netid globals
     _net0_globals!(net0_globs, net0)
-    net0_globs["scope"] = @litescope
     serialize(net0_globs)
     
     # up sim globals
     sim_globs = blob!(B, "sim.globals")
+    sim_globs["net0.globals.id"] = net0_globs_id
     sim_globs["lite.scopes", basename(@__FILE__)] = @litescope
     serialize(sim_globs)
 
