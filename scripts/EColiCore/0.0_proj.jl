@@ -18,11 +18,12 @@ globproj!(PROJ)
 PROJVER = v"0.2.0-ecoli.core"
 
 # .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.
-include("0.1_utils.jl")
+include("0.99_proj.base.jl")
 
 # .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.
 # Bloberia
 B = Bloberia(_blobsdir())
+G = blob!(B, "sim.globals")
 mkpath(B)
 
 # .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.

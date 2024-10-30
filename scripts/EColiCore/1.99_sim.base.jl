@@ -78,4 +78,7 @@ function unordered_hash(vec)
 end
 
 # ..- .- -. -. -. - . -. --. .-.-......- - 
+_dot_string(a, as...) = join([a; as...], ".")
+
+# ..- .- -. -. -. - . -. --. .-.-......- - 
 nothing

@@ -14,7 +14,7 @@ end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
-include("1.0_sim.base.jl")
+include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
@@ -24,15 +24,13 @@ let
     # hyper-params
     
     # globals blobs
-    sim_globs = blob(B, "sim.globals")
-    
-    net0_globs_id = sim_globs["net0.globals.id"]::String
+    net0_globs_id = G["net0.globals.id"]::String
     net0_globs = blob(B, net0_globs_id)
 
     netid = net0_globs["net0.netid"]::String
     @show netid
 
-    hnd_id = sim_globs["hit.and.down.id"]
+    hnd_id = G["hit.and.down.id"]
     hnd_globs_id = "$(netid).$(hnd_id).globals"
     hnd_globs = blob!(B, hnd_globs_id)
     iidxs_pool0 = hnd_globs["iidxs_pool0"]::Vector{Int}

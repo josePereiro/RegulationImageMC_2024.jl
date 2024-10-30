@@ -7,14 +7,13 @@ end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
-include("1.0_sim.base.jl")
+include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # Trajectories
 let
     # globals blobs
-    sim_globs = blob(B, "sim.globals")
-    hnd_globs_id = sim_globs["hnd.globals.id"]
+    hnd_globs_id = G["hnd.globals.id"]
     hnd_globs = blob!(B, hnd_globs_id)
     
     f = Figure()
@@ -42,8 +41,7 @@ end
 # lenght
 let
     # globals blobs
-    sim_globs = blob(B, "sim.globals")
-    hnd_globs_id = sim_globs["hnd.globals.id"]
+    hnd_globs_id = G["hnd.globals.id"]
     hnd_globs = blob!(B, hnd_globs_id)
     
     h0 = NDHistogram("koset.len" => 0:1000)
@@ -69,8 +67,7 @@ end
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
     # globals blobs
-    sim_globs = blob(B, "sim.globals")
-    hnd_globs_id = sim_globs["hnd.globals.id"]
+    hnd_globs_id = G["hnd.globals.id"]
 
     dup_count = At{Int}(0)
     nondup_count = At{Int}(0)

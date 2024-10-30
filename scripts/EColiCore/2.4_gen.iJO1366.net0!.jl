@@ -1,6 +1,7 @@
 # @time begin
 #     using RegulationImageMC_2024
 #     using Gurobi
+#     using Clp
 #     using ProjFlows
 #     using Base.Threads
 # end
@@ -19,7 +20,7 @@
 # ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # let
 #     # net0 globals
-#     netid = "ecoli_core_Beg2007"
+#     netid = "iJO1366"
 #     net0_globs_id = string(netid, ".globals")
 #     net0_globs = blob!(B, net0_globs_id)
 #     net0_globs["net0.netid"] = netid
@@ -29,23 +30,24 @@
 #     @show netid
 #     @show size(net0)
 
-#     # set exchange pattern
-#     # Set exchanges, all nutrinets allowed
-#     exch_ids = [ "EX_glc__D_e", "EX_lac__D_e", "EX_malt_e", "EX_gal_e", "EX_glyc_e"]
+#     # set glc exchange
+#     # It should be the only carbon source open
+#     exch_ids = [extras(net0, "EX_GLC")]
 #     for id in exch_ids
 #         bounds!(net0, id, -10.0, 0.0)
 #     end
-#     # TODO: try with no acetate
-#     bounds!(net0, "EX_ac_e", 0.0, 1000.0) # allow production
 #     net0_globs["exch_ids"] = exch_ids
 #     biom_id = extras(net0, "BIOM")
 #     net0_globs["net0.biom_id"] = biom_id
 #     linear_weights!(net0, biom_id, 1.0) 
 
-#     # net types
-#     _net0_globals!(net0_globs, net0)
+#     # create netid globals
+#     _net0_globals!(net0_globs, net0; 
+#         box_eps = 1e-2, 
+#         box_reduce = false, 
+#         box_nths = NTHREADS
+#     )
 #     serialize(net0_globs)
-    
     
 #     # up sim globals
 #     merge!(G, @litescope)

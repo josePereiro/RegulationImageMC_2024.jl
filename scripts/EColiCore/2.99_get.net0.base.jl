@@ -49,15 +49,15 @@ function _net0_globals!(rab::raBlob, net0;
     # @assert all(isapprox.(bioms[1], bioms; atol = 1e-4))
 
     # store globals
-    rab["net0"] = net0
-    rab["net0.lep0"] = lep0
-    rab["net0.blep0.ref"] = blep0_ref
-    rab["net0.eblep0.ref"] = eblep0_ref
+    rab["net0", "net0"] = net0
+    rab["net0", "net0.lep0"] = lep0
+    rab["net0", "net0.blep0.ref"] = blep0_ref
+    rab["net0", "net0.eblep0.ref"] = eblep0_ref
     # reference iders
     # - all stored index vector will refers to this order
-    rab["net0.rxns"] = reactions(net0)
-    rab["net0.eblep0.idxi"] = eblep0.idxi
-    rab["net0.biom0"] = biom0
+    rab["net0", "net0.rxns"] = reactions(net0)
+    rab["net0", "net0.eblep0.idxi"] = eblep0.idxi
+    rab["net0", "net0.biom0"] = biom0
 
     return nothing
 end

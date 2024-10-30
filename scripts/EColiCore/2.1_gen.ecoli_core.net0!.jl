@@ -7,16 +7,13 @@ end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
-include("1.0_sim.base.jl")
-include("2.0_get.net0.base.jl")
+include("1.99_sim.base.jl")
+include("2.99_get.net0.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
     # net0 globals
     netid = "ecoli_core"
-    net0_globs_id = string(netid, ".globals")
-    net0_globs = blob!(B, net0_globs_id)
-    net0_globs["net0.netid"] = netid
 
     # load net
     net0 = pull_net(netid)
@@ -29,20 +26,16 @@ let
     for id in exch_ids
         bounds!(net0, id, -10.0, 0.0)
     end
-    net0_globs["net0.exch_ids"] = exch_ids
+    G["net0", "exch_ids"] = exch_ids
     biom_id = extras(net0, "BIOM")
-    net0_globs["net0.biom_id"] = biom_id
     linear_weights!(net0, biom_id, 1.0) 
 
     # create netid globals
-    _net0_globals!(net0_globs, net0)
-    serialize(net0_globs)
+    _net0_globals!(G, net0)
+    merge!(G, @litescope)
+    merge!(G, "net0", @litescope)
     
-    # up sim globals
-    sim_globs = blob!(B, "sim.globals")
-    sim_globs["net0.globals.id"] = net0_globs_id
-    sim_globs["lite.scopes", basename(@__FILE__)] = @litescope
-    serialize(sim_globs)
+    serialize(G)
 
     nothing
 end

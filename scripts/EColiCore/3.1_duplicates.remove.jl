@@ -6,13 +6,12 @@ end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
-include("1.0_sim.base.jl")
+include("1.99_sim.base.jl")
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
     # globals blobs
-    sim_globs = blob(B, "sim.globals")
-    hnd_globs_id = sim_globs["hnd.globals.id"]
+    hnd_globs_id = G["hnd.globals.id"]
     hnd_globs = blob!(B, hnd_globs_id)
 
     # duplicates

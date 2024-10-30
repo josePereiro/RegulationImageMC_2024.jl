@@ -8,11 +8,11 @@ end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
-include("1.0_sim.base.jl")
+include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # NOTES:
-# - ko_downset: a downregulation set that lead to an unfeasible network
+# - downset: a downregulation set that lead to an unfeasible network
 # - fea_downset: a downregulation set that lead to an  still feasible network
 
 # - Each ensemble has a fixed enviromen
@@ -20,39 +20,28 @@ include("1.0_sim.base.jl")
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
     # meta
-    script_version = v"0.2.0"
-    
-    # hyper-params
+    script_version = v"0.3.0"
     
     # globals blobs
-    sim_globs = blob(B, "sim.globals")
-    
-    net0_globs_id = sim_globs["net0.globals.id"]::String
-    net0_globs = blob(B, net0_globs_id)
-    
-    netid = net0_globs["net0.netid"]::String
+    netid = G["netid"]::String
     @show netid
-    
-    # TODO: rename to account for sim.global
-    hnd_prefix = "hit.and.down" # TO SYNC
-    hnd_globs_id = "$(hnd_prefix).$(netid).globals"
-    hnd_globs = blob!(B, hnd_globs_id)
-    sim_globs["hnd.globals.id"] = hnd_globs_id
 
+    hnd_fullid = _dot_string("hit.and.down", netid, script_version)
+    
     # Reset (uncomment to reset)
-    # rm(hnd_globs) 
-    # foreach_batch(rm, B, hnd_globs_id)
+    foreach_batch(rm, B, hnd_fullid)
 
     # duplicates
     # TODO make write/read frequent and locked
     # Make it an struct which creates a global (rablob) in a given Bloberia
     dup_buff_size = 1_000_000
-    global dups_buff = get!(hnd_globs, "kosets.duplicates", "local.buffer") do
+    global dups_buff = get!(G, "hnd.downset.duplicates", "local.buffer") do
         HashTracker(dup_buff_size)
     end
     dups_count = 0
     nondups_count = 0
     
+    return 
     # params
     down_factor = 0.0
     net0 = net0_globs["net0"]::MetNet
@@ -79,9 +68,9 @@ let
         @show _batchi
         
         # new BlobBatch
-        hd_bb = headbatch!(B, hnd_globs_id)
+        hd_bb = headbatch!(B, hnd_fullid)
         if islocked(hd_bb) # ignore locked 
-            hd_bb = blobbatch!(B, hnd_globs_id)
+            hd_bb = blobbatch!(B, hnd_fullid)
         end
         setmeta!(hd_bb, "blobs.lim", 500)
         lock(hd_bb)
@@ -92,11 +81,10 @@ let
         _downfactors = ones(Float64, N)
 
         # refresh hnd_globs
-        lock(hnd_globs) do
+        lock(G) do
             # load disk version
-            _hnd_globs = blob(hnd_globs)
-            _dups_buff = get!(_hnd_globs, "kosets.duplicates", "local.buffer") do
-                HashTracker(dup_buff_size)
+            _dups_buff = get!(blob(G), "hnd.downset.duplicates", "local.buffer") do
+                hash_set
             end
             hash_set = dups_buff.hash_set
             _hash_set = _dups_buff.hash_set
@@ -236,8 +224,8 @@ let
     hnd_globs["iidxs_pool0"] = iidxs_pool0
     serialize(hnd_globs)
 
-    sim_globs["lite.scopes", basename(@__FILE__)] = @litescope
-    serialize(sim_globs)
+    G["lite.scopes", basename(@__FILE__)] = @litescope
+    serialize(G)
 
     nothing
 end
