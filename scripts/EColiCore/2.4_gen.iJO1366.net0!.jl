@@ -42,7 +42,7 @@
 #     linear_weights!(net0, biom_id, 1.0) 
 
 #     # create netid globals
-#     _net0_globals!(net0_globs, net0; 
+#     _net0_models!(net0_globs, net0; 
 #         box_eps = 1e-2, 
 #         box_reduce = false, 
 #         box_nths = NTHREADS

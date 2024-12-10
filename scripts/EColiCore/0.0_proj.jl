@@ -23,7 +23,8 @@ include("0.99_proj.base.jl")
 # .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.
 # Bloberia
 B = Bloberia(_blobsdir())
-G = blob!(B, "sim.globals")
+G = blobbatch!(B, "_sim.globals") 
+C = blobbatch!(B, "_sim.cache") 
 mkpath(B)
 
 # .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.

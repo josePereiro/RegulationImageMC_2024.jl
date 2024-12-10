@@ -12,30 +12,38 @@ include("2.99_get.net0.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
-    # net0 globals
-    netid = "ecoli_core"
+    # reset
+    empty!(G)
 
+    # script meta
+    script_id = "gen.net0"
+    script_ver = v"0.1.0"
+    
     # load net
+    netid = "ecoli_core"
     net0 = pull_net(netid)
     @show netid
     @show size(net0)
     
-    # set glc exchange
-    # It should be the only carbon source open
+    # set exchanges
     exch_ids = ["EX_glc__D_e"]
     for id in exch_ids
         bounds!(net0, id, -10.0, 0.0)
     end
-    G["net0", "exch_ids"] = exch_ids
+    G[script_id, "exch_ids"] = exch_ids
     biom_id = extras(net0, "BIOM")
     linear_weights!(net0, biom_id, 1.0) 
-
-    # create netid globals
-    _net0_globals!(G, net0)
-    merge!(G, @litescope)
-    merge!(G, "net0", @litescope)
     
-    serialize(G)
+    # create netid globals
+    box_eps = 0.0
+    box_reduce = true
+    _net0_models!(net0; script_id, box_eps, box_reduce)
+    
+    # finish/write
+    merge!(G, script_id, @litecontext)
+    G[script_id, "src"] = read(@__FILE__, String)
+    G[script_id, "exch_ids"] = exch_ids
+    serialize!(G)
 
     nothing
 end

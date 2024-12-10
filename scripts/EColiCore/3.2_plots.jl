@@ -10,11 +10,9 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# Trajectories
+# Biomass trajectory
 let
     # globals blobs
-    hnd_globs_id = G["hnd.globals.id"]
-    hnd_globs = blob!(B, hnd_globs_id)
     
     f = Figure()
     ax = Axis(f[1,1]; xlabel = "idx", ylabel = "biom")
@@ -22,7 +20,7 @@ let
     for bb in eachbatch(B, hnd_globs_id)
         @show bb.group
         for b in bb
-            sim_status = b["sim_status"]
+            exit_status = b["exit_status"]
             # downset = b["cargo.downset", "downset"]::Vector{Int}
             biomset = b["cargo.biomset", "biomset"]::Vector{Float64} 
             idxs = eachindex(biomset)
@@ -38,11 +36,11 @@ let
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# lenght
+# koset len
 let
     # globals blobs
-    hnd_globs_id = G["hnd.globals.id"]
-    hnd_globs = blob!(B, hnd_globs_id)
+    hnd_globs = getframe(G, "hnd")
+    hnd_globs_id = hnd_globs["hnd_fullid"]
     
     h0 = NDHistogram("koset.len" => 0:1000)
 
@@ -65,9 +63,40 @@ let
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+# biom dist
 let
     # globals blobs
-    hnd_globs_id = G["hnd.globals.id"]
+    hnd_globs = getframe(G, "hnd")
+    hnd_globs_id = hnd_globs["hnd_fullid"]
+    
+    h0 = NDHistogram("biom" => 0:0.05:1000)
+
+    @time for bb in eachbatch(B, hnd_globs_id)
+        for b in bb
+            get(b, "duplicate.flag", false) && continue
+            biomset = b["cargo.biomset", "biomset"]
+            for (bi, biom) in enumerate(biomset)
+                isfinite(biom) || continue
+                count!(h0, (biom, ), bi)
+            end
+        end
+    end
+
+    # Plots
+    @time xs, ws = hist_series(h0, "biom")
+
+    f = Figure()
+    ax = Axis(f[1,1]; xlabel = "biom", ylabel = "count")
+    scatter!(ax, xs, ws)
+    barplot!(ax, xs, ws)
+    f
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+let
+    # globals blobs
+    hnd_globs = getframe(G, "hnd")
+    hnd_globs_id = hnd_globs["hnd_fullid"]
 
     dup_count = At{Int}(0)
     nondup_count = At{Int}(0)

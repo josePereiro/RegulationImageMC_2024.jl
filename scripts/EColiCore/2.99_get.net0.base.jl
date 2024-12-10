@@ -1,39 +1,49 @@
 using Statistics
 
 # .- - -. - . .. .- .- - . - - -. - - -. -.- .--. 
-function _net0_globals!(rab::raBlob, net0; 
+function _net0_models!(net0; 
+        script_id = "gen.net0",
         box_eps = 0.0, 
         box_reduce = true, 
         box_nths = NTHREADS
     )
     
+    # net0
+    frame = hashed_id("net0.cache.", net0)
+    net0_ref = blobyio!(C, frame, "model", :getser!) do
+        return net0
+    end
+
     # lep0
-    lep0 = lepmodel(net0)
-    biom_id = extras(net0, "BIOM")
+    frame = hashed_id("lep0.cache.", net0)
+    lep0_ref = blobyio!(C, frame, "model", :getser!) do
+        return lepmodel(net0)
+    end
+    lep0 = C[lep0_ref]
     
     # fva_strip
-    frame = hashed_id("blep0.cache.", lep0, box_eps, box_reduce, box_nths)
-    @show frame
-    blep0_ref = withblob!(rab, :get!, frame, "model") do
+    biom_id = extras(net0, "BIOM")
+    frame = hashed_id("blep0.cache.", lep0, box_eps, box_reduce)
+    blep0_ref = blobyio!(C, frame, "model", :getser!) do
         _blep0 = fva_strip(lep0, LP_SOLVER; 
             nths = box_nths, 
             verbose = true, 
             eps = box_eps, 
             reduce = box_reduce
         )
-        linear_weights!(net0, biom_id, 1.0)
+        linear_weights!(_blep0, biom_id, 1.0)
         return _blep0
     end
-    blep0 = rab[frame, "model"]
+    blep0 = C[blep0_ref]
 
     # EchelonLEPModel
     frame = hashed_id("eblep0.cache.", blep0)
-    eblep0_ref = withblob!(rab, :get!, frame, "model") do
+    eblep0_ref = blobyio!(C, frame, "model", :getser!) do
         _eblep0 = EchelonLEPModel(blep0; verbose = true)
         linear_weights!(net0, biom_id, 1.0)
         return _eblep0
     end
-    eblep0 = rab[frame, "model"]
+    eblep0 = C[eblep0_ref]
 
     # Test FBA
     bioms = Float64[]
@@ -49,15 +59,15 @@ function _net0_globals!(rab::raBlob, net0;
     # @assert all(isapprox.(bioms[1], bioms; atol = 1e-4))
 
     # store globals
-    rab["net0", "net0"] = net0
-    rab["net0", "net0.lep0"] = lep0
-    rab["net0", "net0.blep0.ref"] = blep0_ref
-    rab["net0", "net0.eblep0.ref"] = eblep0_ref
+    G[script_id, "net0.ref"] = net0_ref
+    G[script_id, "net0.lep0.ref"] = lep0_ref
+    G[script_id, "net0.blep0.ref"] = blep0_ref
+    G[script_id, "net0.eblep0.ref"] = eblep0_ref
     # reference iders
     # - all stored index vector will refers to this order
-    rab["net0", "net0.rxns"] = reactions(net0)
-    rab["net0", "net0.eblep0.idxi"] = eblep0.idxi
-    rab["net0", "net0.biom0"] = biom0
+    G[script_id, "net0.rxns"] = reactions(net0)
+    G[script_id, "net0.eblep0.idxi"] = eblep0.idxi
+    G[script_id, "net0.biom0"] = biom0
 
     return nothing
 end

@@ -43,7 +43,7 @@
 #     linear_weights!(net0, biom_id, 1.0) 
 
 #     # net types
-#     _net0_globals!(net0_globs, net0)
+#     _net0_models!(net0_globs, net0)
 #     serialize(net0_globs)
     
     

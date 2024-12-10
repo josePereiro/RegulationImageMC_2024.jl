@@ -44,7 +44,7 @@ end
 _downfactor_vec(N::Int, downset::Vector, down_factor) = 
     _downfactor_vec!(ones(N), downset, down_factor)
 
-# .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # Hash tracker
 struct HashTracker
     hash_set::Set{UInt}
@@ -67,18 +67,33 @@ function check_duplicate!(t::HashTracker, h::UInt64)
     return false
 end
 
-
-# .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.
-function unordered_hash(vec)
-    combined_hash = zero(UInt)
-    for x in vec
-        combined_hash ⊻= hash(x)
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+function _dups_tracker(
+        script_id, script_ver; 
+        dup_buff_size = 1_000_000
+    )
+    t0 = HashTracker(dup_buff_size)
+    for bb in eachbatch(B, script_id)
+        get(bb, script_id, "script.ver", "") == script_ver || continue
+        t = get(bb, script_id, "dups_buff", nothing)
+        isnothing(t) && continue
+        length(t0.hash_set) == dup_buff_size && break
+        merge!(t0, t)
     end
-    return combined_hash
+    return t0
 end
 
-# ..- .- -. -. -. - . -. --. .-.-......- - 
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+import Base.merge!
+Base.merge!(t0::HashTracker, t1::HashTracker) = isempty(t1.hash_set) || push!(t0.hash_set, t1.hash_set...)
+
+import Base.length
+Base.length(t::HashTracker) = length(t.hash_set)
+
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+
 _dot_string(a, as...) = join([a; as...], ".")
 
-# ..- .- -. -. -. - . -. --. .-.-......- - 
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
 nothing
