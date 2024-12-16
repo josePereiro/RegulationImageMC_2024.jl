@@ -7,24 +7,25 @@ function _net0_models!(net0;
         box_reduce = true, 
         box_nths = NTHREADS
     )
+
+    mode = :getser!
     
     # net0
-    frame = hashed_id("net0.cache.", net0)
-    net0_ref = blobyio!(C, frame, "model", :getser!) do
-        return net0
-    end
+    net0_ref = hashio!(G, net0, mode; 
+        prefix = "net0.cache", 
+    )
 
     # lep0
-    frame = hashed_id("lep0.cache.", net0)
-    lep0_ref = blobyio!(C, frame, "model", :getser!) do
+    frame = hashed_id("lep0.cache", net0)
+    lep0_ref = blobyio!(G, frame, "model", mode) do
         return lepmodel(net0)
     end
-    lep0 = C[lep0_ref]
+    lep0 = G[lep0_ref]
     
     # fva_strip
     biom_id = extras(net0, "BIOM")
-    frame = hashed_id("blep0.cache.", lep0, box_eps, box_reduce)
-    blep0_ref = blobyio!(C, frame, "model", :getser!) do
+    frame = hashed_id("blep0.cache", lep0, box_eps, box_reduce)
+    blep0_ref = blobyio!(G, frame, "model", mode) do
         _blep0 = fva_strip(lep0, LP_SOLVER; 
             nths = box_nths, 
             verbose = true, 
@@ -34,16 +35,16 @@ function _net0_models!(net0;
         linear_weights!(_blep0, biom_id, 1.0)
         return _blep0
     end
-    blep0 = C[blep0_ref]
+    blep0 = G[blep0_ref]
 
     # EchelonLEPModel
-    frame = hashed_id("eblep0.cache.", blep0)
-    eblep0_ref = blobyio!(C, frame, "model", :getser!) do
+    frame = hashed_id("eblep0.cache", blep0)
+    eblep0_ref = blobyio!(G, frame, "model", mode) do
         _eblep0 = EchelonLEPModel(blep0; verbose = true)
         linear_weights!(net0, biom_id, 1.0)
         return _eblep0
     end
-    eblep0 = C[eblep0_ref]
+    eblep0 = G[eblep0_ref]
 
     # Test FBA
     bioms = Float64[]
@@ -54,7 +55,6 @@ function _net0_models!(net0;
         push!(bioms, biom)
         @show biom
     end
-    # biom0 = mean(bioms)
     biom0 = maximum(bioms)
     # @assert all(isapprox.(bioms[1], bioms; atol = 1e-4))
 

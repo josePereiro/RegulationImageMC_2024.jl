@@ -30,7 +30,6 @@ let
     for id in exch_ids
         bounds!(net0, id, -10.0, 0.0)
     end
-    G[script_id, "exch_ids"] = exch_ids
     biom_id = extras(net0, "BIOM")
     linear_weights!(net0, biom_id, 1.0) 
     
@@ -43,7 +42,7 @@ let
     merge!(G, script_id, @litecontext)
     G[script_id, "src"] = read(@__FILE__, String)
     G[script_id, "exch_ids"] = exch_ids
-    serialize!(G)
+    serialize!(G; lk = true)
 
     nothing
 end

@@ -27,7 +27,16 @@ let
     # meta
     script_id = "hit.and.down"
     script_ver = v"0.1.0"
-    ctx_hash = combhash(script_id, script_ver)
+
+    # local cache
+    S = blobbatch!(B, 
+        hashed_id(
+            string("cache.", script_id), 
+            script_ver
+        )
+    )
+    S["script_id"] = script_id
+    S["script_ver"] = script_ver
      
     ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # PARAMETERS
@@ -44,11 +53,10 @@ let
     blep0 = G["gen.net0", "net0.blep0.ref"][]::LEPModel
     lb0, ub0 = lb(blep0), ub(blep0)
     M, N = size(blep0)
+    BLOBS_PER_BATCH = 250
     
     ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    # up context
-    ctx_hash = combhash(ctx_hash, net0_hash)
     
     # sim state
     opm = FBAOpModel(blep0, LP_SOLVER)
@@ -56,7 +64,7 @@ let
     exit_status = "ATINIT"
 
     # Reset (uncomment to reset)
-    # foreach_batch(rm, B, script_id)
+    # foreach_batch(rm, B, script_id); rm(S); return
     
     dups_count = 0
     nondups_count = 0
@@ -85,8 +93,8 @@ let
         end
         bloblim!(hd_bb, BLOBS_PER_BATCH)
 
-        dups_buff = _dups_tracker(
-            script_id, script_ver; 
+        # duplicate buffer
+        dups_buff = _dups_tracker(S; 
             dup_buff_size = 1_000_000
         )
         @info("HASH_SET", 
@@ -246,6 +254,9 @@ let
 
             # write
             serialize!(hd_bb)
+            println("Hi")
+            
+            serialize!(S; lk = true)
 
         finally # try lock
             unlock(hd_bb)
@@ -256,7 +267,7 @@ let
     # write globals
     merge!(G, script_id, @litecontext)
     G[script_id, "src"] = read(@__FILE__, String)
-    serialize!(G)
+    serialize!(G; lk = true)
 
     nothing
 end

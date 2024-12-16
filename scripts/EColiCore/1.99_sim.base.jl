@@ -13,9 +13,6 @@ LP_SOLVER = Clp.Optimizer
 # Gurobi
 NTHREADS = nthreads()
 
-# Bloberia
-BLOBS_PER_BATCH = 1000
-
 # ..- .- -. -. -. - . -. --. .-.-......- - 
 # Utils
 
@@ -57,7 +54,8 @@ struct HashTracker
 
 end
 
-function check_duplicate!(t::HashTracker, h::UInt64)
+import Base.push!
+function Base.push!(t::HashTracker, h::UInt64)
     h in t.hash_set && return true
     if length(t.hash_set) >= t.lim
         # delete random
@@ -67,29 +65,55 @@ function check_duplicate!(t::HashTracker, h::UInt64)
     return false
 end
 
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
-function _dups_tracker(
-        script_id, script_ver; 
-        dup_buff_size = 1_000_000
-    )
-    t0 = HashTracker(dup_buff_size)
-    for bb in eachbatch(B, script_id)
-        get(bb, script_id, "script.ver", "") == script_ver || continue
-        t = get(bb, script_id, "dups_buff", nothing)
-        isnothing(t) && continue
-        length(t0.hash_set) == dup_buff_size && break
-        merge!(t0, t)
-    end
-    return t0
-end
-
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
+check_duplicate!(t::HashTracker, el::UInt64) = push!(t, el)
+    
 import Base.merge!
-Base.merge!(t0::HashTracker, t1::HashTracker) = isempty(t1.hash_set) || push!(t0.hash_set, t1.hash_set...)
+function Base.merge!(t0::HashTracker, t1::HashTracker) 
+    isempty(t1) && return
+    for el in t1.hash_set
+        push!(t0, el)
+    end
+end
 
 import Base.length
 Base.length(t::HashTracker) = length(t.hash_set)
 
+import Base.isempty
+Base.isempty(t::HashTracker) = isempty(t.hash_set)
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+function _dups_tracker(S; 
+        dup_buff_size = 1_000_000
+    )
+
+    try; lock(S)
+
+        # globals
+        script_ver = S["script_ver"]
+        
+        # cache
+        frame = hashed_id("dups.buff.cache", script_ver)
+        
+        # ram version
+        buff1 = get!(S, frame, "buff") do
+            HashTracker(dup_buff_size)
+        end
+
+        # disk version
+        resetframe!(S, frame)
+        buff0 = get!(S, frame, "buff") do
+            HashTracker(dup_buff_size)
+        end
+        merge!(buff0, buff1)
+
+        serialize!(S, frame)
+        
+        return buff0
+    finally
+        unlock(S)
+    end
+    
+end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 

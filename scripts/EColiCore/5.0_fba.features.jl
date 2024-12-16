@@ -21,8 +21,18 @@ let
     script_ver = v"0.1.0"
     ctx_hash = combhash(script_id, script_ver)
 
+    # local cache
+    S = blobbatch!(B, 
+        hashed_id(
+            string("cache.", script_id), 
+            script_ver
+        )
+    )
+    S["script_id"] = script_id
+    S["script_ver"] = script_ver
+
     # Reset (uncomment to reset)
-    # foreach_batch(rm, B, script_id); return
+    # foreach_batch(rm, B, script_id); rm(S); return
 
     ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     # PARAMETERS
@@ -72,8 +82,10 @@ let
             lock(ff_bb)
 
             # @show ps_bb
-            for ps_b in ps_bb
-                @show ps_b.uuid
+            for (bi, ps_b) in enumerate(ps_bb)
+                if iszero(mod(bi, 100))
+                    @show (bi, ps_b.uuid)
+                end
 
                 # TODO: add get(vb, key..., dflt) interface also for frames
                 # get(ps_b, "duplicate.flag", false) && continue
@@ -105,16 +117,20 @@ let
     
             end # for ps_b
     
-            # write ps_bb (keep track of ss versions)
+            # write ps_bb 
+            # (keep track of ss versions)
             push!(version_hist, script_ver)
             serialize!(ps_bb, script_id)
     
             # write ff_bb
             ## ctx
+            merge!(ff_bb, script_id, @litecontext)
+
             ff_bb[script_id, "ps_bb_ref"] = ps_bb_ref
             ff_bb[script_id, "src"] = read(@__FILE__, String)
-            merge!(ff_bb, script_id, @litecontext)
+            
             serialize!(ff_bb)
+
         finally;
             unlock(ps_bb)
             isnothing(ff_bb) || unlock(ff_bb)
@@ -123,11 +139,10 @@ let
     end # for hd_bb
 
     # write globals
-    lock(G) do
-        G[script_id, "src"] = read(@__FILE__, String)
-        merge!(G, script_id, @litecontext)
-        serialize!(G)
-    end
+    merge!(G, script_id, @litecontext)
+    G[script_id, "src"] = read(@__FILE__, String)
+    serialize!(G; lk = true)
+
     nothing
 end
 
