@@ -1,6 +1,5 @@
 @time begin
     using RegulationImageMC_2024
-    using Gurobi
     using ProjFlows
     using Random
     using DataStructures

@@ -4,7 +4,7 @@ using Base.Threads
 # Constants/config
 
 # Gurobi
-import Gurobi
+# import Gurobi
 # GRB_ENV = Gurobi.Env()
 # LP_SOLVER = () -> Gurobi.Optimizer(GRB_ENV)
 

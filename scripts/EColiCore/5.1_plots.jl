@@ -17,7 +17,7 @@ let
     h0_ref = blobyio!(C, 
         "plots.feasets.hist",
         "cached", 
-        :setser!, 
+        :getser!, 
     ) do
 
         n_tasks = 2 * nthreads()
@@ -41,7 +41,7 @@ let
                         feaset = b["cargo.feaset", "feaset"]
                         feaset_len = length(feaset)
                         # @show feaset
-                        for idx in feaset
+                        for (idx, biom) in zip(feaset, biomset)
                             count!(_h0, (feaset_len, idx), 1)
                         end
                     end # for b
@@ -55,21 +55,20 @@ let
         
         return merge!(map(fetch, tasks)...)
     end # blobyio!
-    nothing
 end
 
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # PLOT
 let
-    h0 = C["plots.feasets.hist", "cached"]
     blep0 = G["gen.net0", "net0.blep0.ref"][]
+    h0 = C["plots.feasets.hist", "cached"]
     
     # Plots
     # "ko.indx", "feaset.len"
     # did = "feaset.len"
     did = "ko.indx"
-    h1 = marginal(h0, did)
+    h1 = marginal(h1, did)
     @time x0s, ws = hist_series(h1, did)
     si = sortperm(ws)
     xs = eachindex(x0s)
@@ -86,6 +85,14 @@ let
     ax.xticks = (collect(xs), colids(blep0, x0s))
     ax.xticklabelrotation = 45
     f
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+let
+    for bb in eachbatch(B, "fba.feasures")
+        global _bb = bb
+        return bb
+    end
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
@@ -182,7 +189,7 @@ let
     h1 = filter(h0) do v, w
         biom = v[dimindex(h0, "BIOM")]
         biom > m1 * 0.0 || return false
-        biom < m1 * 0.8 || return false
+        # biom < m1 * 1.1 || return false
         return true
     end
 
@@ -232,7 +239,7 @@ let
     x1s = collect(keys(h2, id1))
     # @time x1s, w1s = hist_series(h1, id1)
 
-    id2 = "EX_CO2"
+    id2 = "BIOM/InCmol"
     h2 = rebin(h1, id2 => -500:0.001:500)
     x2s = collect(keys(h2, id2))
     # @time x2s, w2s = hist_series(h2, id2)
