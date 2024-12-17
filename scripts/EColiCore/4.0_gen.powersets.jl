@@ -26,7 +26,7 @@ let
     script_id = "gen.powersets"
     script_ver = v"0.1.0"
 
-    BLOBS_PER_BATCH = 5000
+    BLOBS_PER_BATCH = 50000
 
     # local cache
     S = blobbatch!(B, 

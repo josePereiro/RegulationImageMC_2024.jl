@@ -15,7 +15,7 @@ globproj!(PROJ)
 
 # TODO: implement version into project0
 # TODO: implement a `versioninfo`-like method for Projects to summarize 
-PROJVER = v"0.2.0-ecoli.core"
+PROJVER = v"0.3.0"
 
 # .-- .- -.-.-.--. ...---. . . . -- .--. -. -. -.
 include("0.99_proj.base.jl")
