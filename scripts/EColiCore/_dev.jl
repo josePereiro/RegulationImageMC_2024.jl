@@ -3,13 +3,27 @@
     using ProjFlows
     using Random
     using DataStructures
+    using Combinatorics
+    using StatsBase
 end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
 include("1.99_sim.base.jl")
-include("3.99_base.jl")
 
+## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
+# DOING Sampling downset
+let
+    downset0 = [1]
+    feaset = downset0[1:end-1]
+    isempty(feaset) && continue
+    D = length(feaset)
+    subfeaset = StatsBase.sample(feaset, rand(1:D), replace = false)
+end
+
+## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
+## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
+## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
 ## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
 using HTTP
 using JSON

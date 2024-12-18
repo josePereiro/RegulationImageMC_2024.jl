@@ -48,11 +48,12 @@ let
     objid = extras(net0, "BIOM")
     objidx = colindex(net0, objid)
     feasible_th = 1e-2
-    traj_lim = 35 # max length of trajectories
+    traj_lim = Inf # max length of trajectories
     blep0 = G["gen.net0", "net0.blep0.ref"][]::LEPModel
     lb0, ub0 = lb(blep0), ub(blep0)
     M, N = size(blep0)
-    BLOBS_PER_BATCH = 250
+    BLOBS_PER_BATCH = 3000
+    DUP_BUFF_SIZE = 10_000_000
     
     ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -79,7 +80,7 @@ let
     iidxs_pool0 = colindex(eblep0, iids_pool0)
 
     # for each batch
-    for _batchi in 1:1
+    for _batchi in 1:100
         @label BATCH_INIT
         
         @show _batchi
@@ -94,7 +95,7 @@ let
 
         # duplicate buffer
         dups_buff = _dups_tracker(S; 
-            dup_buff_size = 1_000_000
+            dup_buff_size = DUP_BUFF_SIZE
         )
         @info("HASH_SET", 
             dups_buff = length(dups_buff),
@@ -216,7 +217,7 @@ let
                 # store
                 b = rblob!(hd_bb)
                 b["exit_status"] = exit_status
-                b["cargo.downset", "downset"] = downset
+                b["cargo.koset", "koset"] = downset
                 b["cargo.biomset", "biomset"] = biomset
                 
                 # blob control

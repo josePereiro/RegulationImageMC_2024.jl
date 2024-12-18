@@ -84,9 +84,9 @@ let
         islocked(bb) && continue
 
         for b in bb
-            # TODO: rename "cargo.downset" => "cargo.downset.ko"
+            # TODO: rename "cargo.koset" => "cargo.downset.ko"
             down_factor = b[Float64, "down_factor"]
-            downset = b[Vector{Int}, "cargo.downset", "downset"]
+            downset = b[Vector{Int}, "cargo.koset", "koset"]
             sort!(downset)
             D = length(downset)
 

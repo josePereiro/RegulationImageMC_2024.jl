@@ -21,7 +21,7 @@ let
         @show bb.group
         for b in bb
             exit_status = b["exit_status"]
-            # downset = b["cargo.downset", "downset"]::Vector{Int}
+            # downset = b["cargo.koset", "koset"]::Vector{Int}
             biomset = b["cargo.biomset", "biomset"]::Vector{Float64} 
             idxs = eachindex(biomset)
             lines!(ax, idxs, biomset;

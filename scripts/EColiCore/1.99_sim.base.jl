@@ -43,6 +43,9 @@ _downfactor_vec(N::Int, downset::Vector, down_factor) =
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # Hash tracker
+# TODO: Add check memory:
+# - dup counts
+# - nondup counts
 struct HashTracker
     hash_set::Set{UInt}
     lim::Int

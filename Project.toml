@@ -18,12 +18,15 @@ NDHistograms = "c9719566-2c26-451b-95bc-5aa9e2747dfa"
 ProjFlows = "cac8b402-4888-4912-9502-a4f91500dd77"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SimpleLockFiles = "0c975e61-21d9-4454-8de5-ff08fd2c478f"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
+Bloberias = "0.4.1"
 CairoMakie = "=0.12.10"
 Clp = "1.1.0"
 JSON = "0.21.4"
 MetX = "0.2.0"
+StatsBase = "0.34.4"
 julia = "1.10"
 
 [extras]
