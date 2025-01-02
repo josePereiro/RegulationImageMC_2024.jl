@@ -13,12 +13,11 @@ include("1.99_sim.base.jl")
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # feasets hist
 let
-    
-    n_tasks = 10
-    ch_size = 10
+    n_tasks = 3
+    ch_size = 3
     
     # clear
-    h0_ref = blobyio!(C, 
+    h0_ref = blobio!(C, 
         "feasets.hist",
         "h0", 
         :setser!, 
@@ -59,7 +58,7 @@ let
         @show length(tasks)
         return merge(map(fetch, tasks))
 
-    end # blobyio!
+    end # blobio!
     @show h0_ref
     return nothing
 end
@@ -87,10 +86,10 @@ let
         end
     end
 
-    n_tasks = 10
-    ch_size = 10
+    n_tasks = 3
+    ch_size = 3
 
-    h0_ref = blobyio!(C, 
+    h0_ref = blobio!(C, 
         "fba.sol.hist", 
         "h0", 
         :setser!
@@ -156,7 +155,7 @@ let
 
         return merge(map(fetch, tasks))
         
-    end # blobyio!
+    end # blobio!
 
     @show h0_ref
     return nothing

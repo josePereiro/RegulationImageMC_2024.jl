@@ -19,7 +19,7 @@ include("1.99_sim.base.jl")
 #   - But again, DO NOT USE FILE NAMES FOR CONTEXT RESOLUTION
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
-# TODO: sample the kosets
+# DONE: sample the kosets
 # - do not compute the full power set (to big)...
 # - sample now from kosets and check duplicates...
 
@@ -47,14 +47,9 @@ let
 
     # Reset (uncomment to reset)
     # foreach_batch(rm, B, script_id); rm(S); return
-
-    # state
-    # TODO: add to Tracker
-    dups_count = 0
-    nondups_count = 0
     
     # params
-    refresh_dup = false
+    refresh_dup = true
     BLOBS_PER_BATCH = 100000
     DUP_BUFF_SIZE = 10_000_000
 
@@ -79,7 +74,7 @@ let
         bloblim!(ps_bb, BLOBS_PER_BATCH)
 
         # dup tracker
-        dups_buff = _dups_tracker(S; 
+        dups_buff = _dups_tracker!(S; 
             dup_buff_size = DUP_BUFF_SIZE
         )
         @info("HASH_SET", 
@@ -91,8 +86,10 @@ let
 
             for hd_vb in hd_bb
                 
-                # control duplicates
-                get(hd_vb, "flags", "duplicate.flag", true) && continue
+                # control flags
+                # (if flag is missing ignore)
+                get(hd_vb, "flags", "duplicate.flag", false) && continue
+                get(hd_vb, "flags", "done.flag", true) || continue
                 
                 koset = hd_vb["cargo.koset", "koset"]
                 length(koset) == 1 && continue # killing ko
@@ -123,7 +120,7 @@ let
                         # refresh dup buf
                         # dup tracker
                         if refresh_dup 
-                            dups_buff = _dups_tracker(S; 
+                            dups_buff = _dups_tracker!(S; 
                                 dup_buff_size = DUP_BUFF_SIZE
                             )
                         end
@@ -136,22 +133,19 @@ let
                     ## check dupplicate
                     feaset_hash = combhash(feaset)
                     if check_duplicate!(dups_buff, feaset_hash)
-                        dups_count += 1 
                         continue # if dupplicate ignore
                     end
-                    nondups_count += 1
     
                     # blob control
                     bc = blobcount(ps_bb)
                     # info
                     if iszero(mod(bc, BLOBS_PER_BATCH ÷ 10))
-                    # if iszero(mod(bc, 10))
                         @info(script_id,
-                            bc,
+                            vblobcount = bc,
                             dups_buff_len = length(dups_buff),
-                            dups_count,
-                            nondups_count,
-                            dups_frac = dups_count / nondups_count
+                            dups_count = dups_count(dups_buff),
+                            nondups_count = nondups_count(dups_buff),
+                            dups_frac = dup_ratio(dups_buff)
                         )
                     end
     

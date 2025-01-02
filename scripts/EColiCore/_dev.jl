@@ -12,6 +12,14 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
+# DONE: add blob inspection
+let
+    global _bb = findbatch!(B, "hit.and.down")
+    ondemand_loadall!(_bb)
+    return 
+end
+
+## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
 # DOING Sampling downset
 let
     downset0 = [1]
@@ -102,7 +110,7 @@ let
     for it in 1:10
 
         # duplicate buffer
-        dups_buff = _dups_tracker(S; 
+        dups_buff = _dups_tracker!(S; 
             dup_buff_size = 1_000_000
         )
         @info("HASH_SET", 

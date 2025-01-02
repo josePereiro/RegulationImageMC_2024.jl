@@ -65,9 +65,6 @@ let
 
     # Reset (uncomment to reset)
     # foreach_batch(rm, B, script_id); rm(S); return
-    
-    dups_count = 0
-    nondups_count = 0
 
     # select muatble reactions
     eblep0 = G["gen.net0", "net0.eblep0.ref"][]
@@ -80,13 +77,13 @@ let
     iidxs_pool0 = colindex(eblep0, iids_pool0)
 
     # for each batch
-    for _batchi in 1:100
+    for _batchi in 1:1
         @label BATCH_INIT
         
         @show _batchi
         
         # new BlobBatch
-        hd_bb = getbatch!(B, script_id, rbbid(script_id)) do _bb
+        hd_bb = findbatch!(B, script_id, rbbid(script_id)) do _bb
             islocked(_bb) && return false
             isfullbatch(_bb) && return false
             return true
@@ -94,7 +91,7 @@ let
         bloblim!(hd_bb, BLOBS_PER_BATCH)
 
         # duplicate buffer
-        dups_buff = _dups_tracker(S; 
+        dups_buff = _dups_tracker!(S; 
             dup_buff_size = DUP_BUFF_SIZE
         )
         @info("HASH_SET", 
@@ -148,13 +145,11 @@ let
                     end
                     
                     if length(downset) > traj_lim
-                        # println("isnothing(ridx)")
                         exit_status = "ERROR.TRAJ.LIM"
                         @goto RUN_END
                     end
 
                     if isnothing(ridx) 
-                        # println("isnothing(ridx)")
                         exit_status = "ERROR.FAILED_STEP"
                         @goto RUN_END
                     end
@@ -170,25 +165,20 @@ let
                         last_biom = solution(opm, objidx)
                         push!(biomset, last_biom)
                         catch err; 
-                            # println("catch err;")
                             exit_status = "ERROR.ONOPTIMIZATION"
                             push!(biomset, NaN)
                             # @show(err)
                             @goto RUN_END
                     end
-                    # @show ridx
-                    # @show last_biom
 
                     # check nan
                     if !isfinite(last_biom)
-                        # println("isnan(last_biom)")
                         exit_status = "OBJ.NAN.OR.INF"
                         @goto RUN_END
                     end
 
                     # feasibility check
                     if last_biom < feasible_th 
-                        # println("last_biom < feasible_th ")
                         exit_status = "UNFEASIBLE"
                         @goto RUN_END
                     end
@@ -204,10 +194,8 @@ let
                     # check dupplicate
                     koset_hash = combhash(downset)
                     if check_duplicate!(dups_buff, koset_hash)
-                        dups_count += 1
                         @goto RUN_INIT # if dupplicate start a new run
                     end
-                    nondups_count += 1
 
                     # Finish run (no more steps)
                     break 
@@ -225,10 +213,11 @@ let
                 # info
                 if iszero(mod(bc, 100))
                     @info(script_id,
-                        bc,
-                        dups_count,
-                        nondups_count,
-                        dups_frac = dups_count / nondups_count
+                        vblobcount = bc,
+                        dups_buff_len = length(dups_buff),
+                        dups_count = dups_count(dups_buff),
+                        nondups_count = nondups_count(dups_buff),
+                        dups_frac = dup_ratio(dups_buff)
                     )
                 end
                 

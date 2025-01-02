@@ -17,7 +17,7 @@ function _net0_models!(net0;
 
     # lep0
     frame = hashed_id("lep0.cache", net0)
-    lep0_ref = blobyio!(G, frame, "model", mode) do
+    lep0_ref = blobio!(G, frame, "model", mode) do
         return lepmodel(net0)
     end
     lep0 = G[lep0_ref]
@@ -25,7 +25,7 @@ function _net0_models!(net0;
     # fva_strip
     biom_id = extras(net0, "BIOM")
     frame = hashed_id("blep0.cache", lep0, box_eps, box_reduce)
-    blep0_ref = blobyio!(G, frame, "model", mode) do
+    blep0_ref = blobio!(G, frame, "model", mode) do
         _blep0 = fva_strip(lep0, LP_SOLVER; 
             nths = box_nths, 
             verbose = true, 
@@ -39,7 +39,7 @@ function _net0_models!(net0;
 
     # EchelonLEPModel
     frame = hashed_id("eblep0.cache", blep0)
-    eblep0_ref = blobyio!(G, frame, "model", mode) do
+    eblep0_ref = blobio!(G, frame, "model", mode) do
         _eblep0 = EchelonLEPModel(blep0; verbose = true)
         linear_weights!(net0, biom_id, 1.0)
         return _eblep0

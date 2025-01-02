@@ -43,32 +43,63 @@ _downfactor_vec(N::Int, downset::Vector, down_factor) =
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # Hash tracker
+# TODO: Move to ProjFlows
 # TODO: Add check memory:
 # - dup counts
 # - nondup counts
 struct HashTracker
     hash_set::Set{UInt}
     lim::Int
+    dup_count::Vector{UInt128}
     function HashTracker(n::Int)
         hash_set = Set{UInt}()
         sizehint!(hash_set, n)
-        new(hash_set, n)
+        new(hash_set, n, UInt128[0, 0])
     end
 
 end
 
 import Base.push!
 function Base.push!(t::HashTracker, h::UInt64)
-    h in t.hash_set && return true
+    if h in t.hash_set 
+        t.dup_count[1] += UInt128(1)
+        return true
+    end
+    
+    # TODO: check better caching strategies
+    # - Maybe track the most frequent
+    #   - Delete the less frequent first
     if length(t.hash_set) >= t.lim
         # delete random
         delete!(t.hash_set, rand(t.hash_set))
     end
     push!(t.hash_set, h)
+    
+    t.dup_count[2] += UInt128(1)
     return false
 end
 
 check_duplicate!(t::HashTracker, el::UInt64) = push!(t, el)
+
+function dup_ratio(t::HashTracker)
+    rat = t.dup_count[1] / (t.dup_count[1] + t.dup_count[2])
+    return convert(Float64, rat)
+end
+
+function check_count(T::DataType, t::HashTracker) 
+    return floor(T, t.dup_count[1] + t.dup_count[2])
+end
+check_count(t::HashTracker) = check_count(Float64, t) 
+
+function dups_count(T::DataType, t::HashTracker)
+    return floor(T, t.dup_count[1])
+end
+dups_count(t::HashTracker) = dups_count(Int, t)
+
+function nondups_count(T::DataType, t::HashTracker)
+    return floor(T, t.dup_count[2])
+end
+nondups_count(t::HashTracker) = nondups_count(Int, t)
     
 import Base.merge!
 function Base.merge!(t0::HashTracker, t1::HashTracker) 
@@ -76,6 +107,9 @@ function Base.merge!(t0::HashTracker, t1::HashTracker)
     for el in t1.hash_set
         push!(t0, el)
     end
+    t0.dup_count[1] = t1.dup_count[1]
+    t0.dup_count[2] = t1.dup_count[2]
+    return t0
 end
 
 import Base.length
@@ -84,38 +118,64 @@ Base.length(t::HashTracker) = length(t.hash_set)
 import Base.isempty
 Base.isempty(t::HashTracker) = isempty(t.hash_set)
 
+function Base.empty!(t::HashTracker)
+    empty!(t.hash_set)
+    r.dup_count[1] = UInt128(0)
+    r.dup_count[2] = UInt128(0)
+    return nothing
+end
+
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-function _dups_tracker(S; 
-        dup_buff_size = 1_000_000
+function _done_tracker!(S; 
+        lk = true
+    )
+    script_id = S["script_id"]
+    done_reg = mergeblobs!(S, script_id; lk) do rblob, dblob
+        # ram
+        hist0 = get!(rblob, "hist") do
+            Dict()
+        end
+        # disk
+        isnothing(dblob) && return hist0
+        buff1 = get!(dblob, "hist") do
+            Dict()
+        end
+        merge!(hist0, buff1)
+        return hist0
+    end
+    return done_reg
+end
+
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+function _dups_tracker!(S; 
+        dup_buff_size = 1_000_000, 
+        lk = true
     )
 
-    try; lock(S)
+    script_ver = S["script_ver"]
+    script_id = S["script_id"]
+    frame = hashed_id("dups.buff.cache", script_ver, script_id)
+    mergeblobs!(S, frame; lk) do rblob, dblob
 
-        # globals
-        script_ver = S["script_ver"]
-        
-        # cache
-        frame = hashed_id("dups.buff.cache", script_ver)
-        
         # ram version
-        buff1 = get!(S, frame, "buff") do
+        buff0 = get!(rblob, "buff") do
             HashTracker(dup_buff_size)
         end
-
-        # disk version
-        resetframe!(S, frame)
-        buff0 = get!(S, frame, "buff") do
-            HashTracker(dup_buff_size)
-        end
-        merge!(buff0, buff1)
-
-        serialize!(S, frame)
         
-        return buff0
-    finally
-        unlock(S)
+        # disk version
+        # if missing on disk return
+        isnothing(dblob) && return nothing
+        buff1 = get!(dblob, "buff") do
+            HashTracker(dup_buff_size)
+        end
+                
+        # merge
+        merge!(buff0, buff1)
+        
+        return nothing
     end
-    
+    return S[frame, "buff"]
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 

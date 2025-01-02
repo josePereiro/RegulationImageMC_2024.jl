@@ -19,79 +19,6 @@ let
     # meta
     script_id = "fba.feasures"
     script_ver = v"0.1.0"
-    done_count = 1
-
-    # local cache
-    global S = blobbatch!(B, 
-        hashed_id(
-            string("cache.", script_id), 
-            script_ver
-        )
-    )
-    S["script_id"] = script_id
-    S["script_ver"] = script_ver
-
-    # all subsets
-    # powerset keep it sorted
-    @time for ps_bb in eachbatch(B, "sample.feasets")
-        @show ps_bb.id
-        ps_bc = blobcount(ps_bb)
-
-        # context control
-        # TODO: do context control
-        
-        # control
-        islocked(ps_bb) && continue
-
-        ff_bb = nothing
-        try; 
-            lock(ps_bb)
-
-            # TODO: Test there are one fba batch for each sampled.feaset batch
-            ps_bb_ref = blobyref(ps_bb)
-            
-            # Check already done
-            # TODO: Fix this
-            # - The problem is that you need to comunicate with the other processes
-            # - similar to dups_buff
-            # - TODO: Make a secure interface for data exchange 
-            #   - Basically is locking and merging your version with the one on disk...
-            global done_reg = get!(S, script_id, "hist", Dict())
-            if get(done_reg, ps_bb.id, -1) === done_count 
-                @info("DONE")
-                continue
-            end
-
-            # done_count
-            # get!(done_reg, ps_bb.id, 0)
-            # done_reg[ps_bb.id] += 1
-            # serialize!(S)
-
-        finally;
-            unlock(ps_bb)
-            isnothing(ff_bb) || unlock(ff_bb)
-        end
-
-    end # for ps_bb
-
-
-    nothing
-end
-
-
-# --.-...- --. -. - -.-..- -- .-..- -. -. 
-
-
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
-## --.-...- --. -. - -.-..- -- .-..- -. -. 
-let
-    # clear
-    empty!(G)
-
-    # meta
-    script_id = "fba.feasures"
-    script_ver = v"0.1.0"
     ctx_hash = combhash(script_id, script_ver)
     done_count = 1
 
@@ -147,12 +74,15 @@ let
             ps_bb_ref = blobyref(ps_bb)
             
             # Check already done
-            done_reg = get!(S, script_id, "hist", Dict())
-            get(done_reg, ps_bb.id, -1) === done_count && continue
-            return done_reg
+            done_reg = _done_tracker!(S; lk = true)
+            if get(done_reg, ps_bb.id, -1) === done_count 
+                @info("DONE")
+                continue
+            end
 
             # new BlobBatch
             ff_bb = blobbatch!(B, hashed_id(script_id, ps_bb.id))
+            # rm(ff_bb); empty!(ff_bb)
             bloblim!(ff_bb, bloblim(ps_bb))
 
             lock(ff_bb)
@@ -164,17 +94,16 @@ let
                     println(
                         "bi: ", bi, "/", ps_bc,
                         " [",
-                        " pid: ", getpid(), 
+                        "pid: ", getpid(), 
                         " thid: ", threadid(),
                         "]"
                     )
 
-                # control duplicates
+                # control flags
                 get(ps_b, "flags", "duplicate.flag", false)  && continue
 
                 feaset = ps_b["cargo.feaset", "feaset"]
                 D = length(feaset)
-                # @show D
     
                 # apply feaset
                 ## reset model
