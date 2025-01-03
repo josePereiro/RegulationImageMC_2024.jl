@@ -13,8 +13,8 @@ include("1.99_sim.base.jl")
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # feasets hist
 let
-    n_tasks = 3
-    ch_size = 3
+    n_tasks = 30
+    ch_size = 30
     
     # clear
     h0_ref = blobio!(C, 
@@ -86,8 +86,8 @@ let
         end
     end
 
-    n_tasks = 3
-    ch_size = 3
+    n_tasks = 40
+    ch_size = 40
 
     h0_ref = blobio!(C, 
         "fba.sol.hist", 
@@ -127,24 +127,28 @@ let
 
                         InCmol = abs(6 * sol[_INDEX_MAP["EX_GLC"]])
 
-                        count!(_h0, (
-                                _getsol(sol, "EX_O2"),
-                                _getsol(sol, "EX_CO2"),
-                                _getsol(sol, "EX_GLC"),
-                                _getsol(sol, "EX_NH4"),
-                                _getsol(sol, "EX_GLU"),
-                                _getsol(sol, "BIOM"),
-                                _getsol(sol, "ATPM"),
-                                _getsol(sol, "EX_O2")/InCmol,
-                                _getsol(sol, "EX_CO2")/InCmol,
-                                _getsol(sol, "EX_GLC")/InCmol,
-                                _getsol(sol, "EX_NH4")/InCmol,
-                                _getsol(sol, "EX_GLU")/InCmol,
-                                _getsol(sol, "BIOM")/InCmol,
-                                _getsol(sol, "ATPM")/InCmol,
-                            ), 
-                            1
-                        )
+                        try
+                            count!(_h0, (
+                                    _getsol(sol, "EX_O2"),
+                                    _getsol(sol, "EX_CO2"),
+                                    _getsol(sol, "EX_GLC"),
+                                    _getsol(sol, "EX_NH4"),
+                                    _getsol(sol, "EX_GLU"),
+                                    _getsol(sol, "BIOM"),
+                                    _getsol(sol, "ATPM"),
+                                    _getsol(sol, "EX_O2")/InCmol,
+                                    _getsol(sol, "EX_CO2")/InCmol,
+                                    _getsol(sol, "EX_GLC")/InCmol,
+                                    _getsol(sol, "EX_NH4")/InCmol,
+                                    _getsol(sol, "EX_GLU")/InCmol,
+                                    _getsol(sol, "BIOM")/InCmol,
+                                    _getsol(sol, "ATPM")/InCmol,
+                                ), 
+                                1
+                            )
+                        catch err;
+                            println("\n", sprint(showerror, err, catch_backtrace()))
+                        end
                     end # for b 
                     bb_count += 1
                     bb_count < Inf || break

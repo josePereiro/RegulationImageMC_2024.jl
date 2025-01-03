@@ -12,16 +12,12 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# TODO: I need a way to know if a power set is already done
-# - A two way graph of relationships
-#   - hb_bb <-> ps_bb
-# - It can be done by naming the ps_bb accordantly
-#   - But again, DO NOT USE FILE NAMES FOR CONTEXT RESOLUTION
-
-# --.-...- --. -. - -.-..- -- .-..- -. -. 
-# DONE: sample the kosets
-# - do not compute the full power set (to big)...
-# - sample now from kosets and check duplicates...
+# TODO: to avoid reserialization creates a serialize.flag interface
+# - It should containg a symbol
+# - Maybea per frame flag
+#   - serializeflag!(:error) error if attempt seriallize
+#   - serializeflag!(:ignore) ignore serialization calls
+#   - serializeflag!(:do) do serialization if called
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
@@ -33,7 +29,7 @@ let
     script_ver = v"0.1.0"
     
     # done count
-    done_count = 1
+    done_target = 1
 
     # local cache
     S = blobbatch!(B, 
@@ -66,9 +62,11 @@ let
         hd_bb_ref = blobyref(hd_bb)
         
         # Check already done
-        done_reg = get!(S, script_id, "hist", Dict())
-        get(done_reg, hd_bb.id, -1) === done_count && continue
-
+        if _check_done_count!(S, hd_bb.id, done_target; lk = true)
+            @info "DONE"
+            continue
+        end
+        
         # new BlobBatch
         ps_bb = blobbatch!(B, rbbid(script_id))
         bloblim!(ps_bb, BLOBS_PER_BATCH)
@@ -155,9 +153,9 @@ let
                 end # for samplei
             end # for hd_b
 
-            # done_count
-            get!(done_reg, hd_bb.id, 0)
-            done_reg[hd_bb.id] += 1
+            # done_target
+            _up_done_count!(S, hd_bb.id, 1; lk = true)
+
             serialize!(S; lk = true)
 
         finally

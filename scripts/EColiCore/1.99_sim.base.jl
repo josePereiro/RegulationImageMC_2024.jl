@@ -126,11 +126,11 @@ function Base.empty!(t::HashTracker)
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-function _done_tracker!(S; 
+function _done_tracker!(f!::Function, S; 
         lk = true
     )
     script_id = S["script_id"]
-    done_reg = mergeblobs!(S, script_id; lk) do rblob, dblob
+    return mergeblobs!(S, script_id; lk) do rblob, dblob
         # ram
         hist0 = get!(rblob, "hist") do
             Dict()
@@ -141,9 +141,28 @@ function _done_tracker!(S;
             Dict()
         end
         merge!(hist0, buff1)
-        return hist0
+
+        # custom
+        val = f!(hist0)
+
+        return val
     end
-    return done_reg
+end
+_done_tracker!(S; lk = true) = _done_tracker!(identity, S; lk)
+
+function _check_done_count!(S, id, done_target; lk = true)
+    _done_tracker!(S; lk) do done_reg
+        done_count = get(done_reg, id, -1) 
+        @show done_count
+        return done_count >= done_target
+    end
+end
+
+function _up_done_count!(S, id, up = 1; lk = true)
+    _done_tracker!(S; lk) do done_reg
+        get!(done_reg, id, 0)
+        done_reg[id] += up
+    end
 end
 
 

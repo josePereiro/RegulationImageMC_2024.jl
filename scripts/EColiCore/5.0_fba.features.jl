@@ -20,7 +20,7 @@ let
     script_id = "fba.feasures"
     script_ver = v"0.1.0"
     ctx_hash = combhash(script_id, script_ver)
-    done_count = 1
+    done_target = 1
 
     # local cache
     S = blobbatch!(B, 
@@ -74,9 +74,8 @@ let
             ps_bb_ref = blobyref(ps_bb)
             
             # Check already done
-            done_reg = _done_tracker!(S; lk = true)
-            if get(done_reg, ps_bb.id, -1) === done_count 
-                @info("DONE")
+            if _check_done_count!(S, ps_bb.id, done_target; lk = true)
+                @info "DONE"
                 continue
             end
 
@@ -137,9 +136,9 @@ let
             
             serialize!(ff_bb)
 
-            # done_count
-            get!(done_reg, ps_bb.id, 0)
-            done_reg[ps_bb.id] += 1
+            # done_target
+            _up_done_count!(S, ps_bb.id, 1; lk = true)
+
             serialize!(S)
 
         finally;

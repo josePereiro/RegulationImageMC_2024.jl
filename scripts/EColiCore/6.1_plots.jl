@@ -63,7 +63,7 @@ let
     ax = Axis(f[1,1]; 
         title = G["gen.net0", "netid"],
         xlabel = id, 
-        ylabel = "log10 count"
+        ylabel = "count"
     )
     scatter!(ax, xs, ws)
     barplot!(ax, xs, ws)
@@ -78,7 +78,7 @@ end
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # corr
 let
-    h0 = C["fba.sol.hist", "cached"]
+    h0 = C["fba.sol.hist", "h0"]
     m0, m1 = extrema(keys(h0, "BIOM"))
     @show m0, m1
     h1 = filter(h0) do v, w
@@ -92,16 +92,20 @@ let
     # Plots
     # "EX_O2", "EX_CO2", "EX_GLC", "EX_NH4", "EX_GLU", "BIOM", "ATPM"
     # id1 = "BIOM/InCmol"
-    id1 = "EX_O2"
+    id1 = "EX_NH4"
     # h1 = marginal(h0, id1)
-    h2 = rebin(h1, id1 => -500:0.001:500)
+    # h2 = rebin(h1, id1 => -500:0.001:500)
+    h2=h1
     x1s = collect(keys(h2, id1))
+    @show length(x1s)
     # @time x1s, w1s = hist_series(h1, id1)
 
     id2 = "BIOM/InCmol"
-    h2 = rebin(h1, id2 => -500:0.001:500)
+    # h2 = rebin(h1, id2 => -500:0.001:500)
+    h2=h1
     x2s = collect(keys(h2, id2))
     # @time x2s, w2s = hist_series(h2, id2)
+    @show length(x2s)
 
     f = Figure()
     ax = Axis(f[1,1]; 
