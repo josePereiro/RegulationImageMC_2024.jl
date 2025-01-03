@@ -14,9 +14,34 @@ include("1.99_sim.base.jl")
 ## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
 # DONE: add blob inspection
 let
-    global _bb = findbatch!(B, "hit.and.down")
-    ondemand_loadall!(_bb)
-    return 
+
+    n_tasks = 40
+    ch_size = 40
+
+    bbch = eachbatch(B, "fba.feasures"; 
+        n_tasks = 1, ch_size
+    )
+
+    bb_count = 100
+    @time tasks = map(1:n_tasks) do _
+        @spawn let
+            
+            for bb in bbch
+                @show (bb.id, threadid())
+                for b in bb
+                    
+                    sol = b["cargo.fba", "sol"]::Vector{Float64}
+                    isempty(sol) && continue
+
+                end # for b 
+                bb_count += 1
+                bb_count < Inf || break
+            end # for bb
+            return rand()
+        end # @spawn let
+    end # tasks = map
+
+    return map(fetch, tasks)
 end
 
 ## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...

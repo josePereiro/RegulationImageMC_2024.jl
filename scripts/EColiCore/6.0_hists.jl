@@ -12,9 +12,10 @@ include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
 # feasets hist
+# TODO: make this accumulative
 let
-    n_tasks = 30
-    ch_size = 30
+    n_tasks = 40
+    ch_size = 40
     
     # clear
     h0_ref = blobio!(C, 
