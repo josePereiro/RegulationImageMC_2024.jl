@@ -17,9 +17,9 @@ let
     h0 = C["feasets.hist", "h0"]
     
     # Plots
-    # "ko.indx", "feaset.len"
-    # did = "feaset.len"
-    did = "ko.indx"
+    "ko.indx", "feaset.len"
+    did = "feaset.len"
+    # did = "ko.indx"
     h1 = marginal(h0, did)
     @time x0s, ws = hist_series(h1, did)
     si = sortperm(ws)
@@ -48,7 +48,7 @@ let
     h1 = filter(h0) do v, w
         biom = v[dimindex(h0, fid)]
         biom > m1 * 0.0 || return false
-        # biom < m1 * 0.90 || return false
+        biom < m1 * 0.98 || return false
         return true
     end
 
@@ -66,7 +66,7 @@ let
         title = G["gen.net0", "netid"],
         xlabel = id, 
         ylabel = "count",
-        limits = (0.0, 0.03, 0.0, nothing)
+        # limits = (0.0, 0.03, 0.0, 5e5)
     )
     scatter!(ax, xs, ws)
     barplot!(ax, xs, ws)
@@ -82,7 +82,7 @@ end
 # corr
 let
     h0 = C["fba.sol.hist", "h0"]
-    m0, m1 = extrema(keys(h0, "BIOM"))
+    m0, m1 = extrema(keys(h0, "BIOM/InCmol"))
     @show m0, m1
     h1 = filter(h0) do v, w
         biom = v[dimindex(h0, "BIOM")]
@@ -103,7 +103,7 @@ let
     @show length(x1s)
     # @time x1s, w1s = hist_series(h1, id1)
 
-    id2 = "BIOM/InCmol"
+    id2 = "BIOM"
     # h2 = rebin(h1, id2 => -500:0.001:500)
     h2=h1
     x2s = collect(keys(h2, id2))

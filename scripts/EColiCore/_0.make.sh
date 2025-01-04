@@ -4,6 +4,7 @@
 # tmux new-session -A -s RUNNER1
 # tmux new-sessioxn -A -s RUNNER2
 # ps -ef | grep 'EColiCore/3.0_hit.and.down.jl'
+# df -lh .
 
 # julia -t4 --project scripts/EColiCore/2.1_gen.ecoli_core.net0.jl
 
