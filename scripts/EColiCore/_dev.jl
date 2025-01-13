@@ -5,11 +5,81 @@
     using DataStructures
     using Combinatorics
     using StatsBase
+    using CairoMakie
 end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
 include("0.0_proj.jl")
 include("1.99_sim.base.jl")
+
+# --.-...- --. -. - -.-..- -- .-..- -. -. 
+let
+    net0 = pull_net("ecoli_core")
+    solver = QUAD_LP_SOLVER
+    opm = FBAOpModel(net0, solver)
+    
+    # biom
+    delta = 1e-3
+    id = extras(net0, "BIOM")
+    @show id
+    set_linear_obj!(opm, id, MAX_SENSE)
+    optimize!(opm)
+    obj = solution(opm, id)
+    @show obj
+    l, u = bounds(opm, id)
+    lb!(opm, id, max(obj - (obj * delta), l))
+    ub!(opm, id, min(obj + (obj * delta), u))
+
+    # glc
+    delta = 1e-3
+    id = extras(net0, "EX_GLC")
+    @show id
+    set_linear_obj!(opm, id, MIN_SENSE)
+    try
+        optimize!(opm)
+    catch err
+        # @show err
+    end 
+    obj = solution(opm, id)
+    @show obj
+    l, u = bounds(opm, id)
+    lb!(opm, id, max(obj - (obj * delta), l))
+    ub!(opm, id, min(obj + (obj * delta), u))
+
+    f = Figure()
+    ax = Axis(f[1,1])
+
+    # parsimonio
+    ids = colids(opm)
+    # Max
+    set_v2_obj!(opm, MIN_SENSE)
+    optimize!(opm)
+    v2_min_sol = solution(opm, ids)
+
+    # Max
+    set_v2_obj!(opm, MAX_SENSE)
+    optimize!(opm)
+    v2_max_sol = solution(opm, ids)
+    
+    
+    # diff = clamp.(v2_max_sol .- v2_min_sol, -10.0, 10.0)
+    # scatter!(ax, eachindex(sol), sol)
+    scatter!(ax, v2_max_sol, v2_min_sol;
+        scale = :
+    )
+    
+    f
+    
+    # set_v2_obj!(opm, MIN_SENSE)
+    # 
+    # vec = solution(opm, ids)
+    
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+
+
+# --.-...- --. -. - -.-..- -- .-..- -. -. 
 
 ## -. -.- -. -. - ..-.... - - . . .- .- .- -. -...
 # DONE: add blob inspection

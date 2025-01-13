@@ -8,7 +8,10 @@ using Base.Threads
 # GRB_ENV = Gurobi.Env()
 # LP_SOLVER = () -> Gurobi.Optimizer(GRB_ENV)
 
+import Clp
 LP_SOLVER = Clp.Optimizer
+import Ipopt
+QUAD_LP_SOLVER = Ipopt.Optimizer
 
 # Gurobi
 NTHREADS = nthreads()

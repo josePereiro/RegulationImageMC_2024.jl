@@ -1,6 +1,7 @@
 # # tmux session
 # tmux list-sessions
 # tmux attach -t 
+######## tmux kill-session -t RUNNER1
 # tmux new-session -A -s RUNNER1
 # tmux new-sessioxn -A -s RUNNER2
 # ps -ef | grep 'EColiCore/3.0_hit.and.down.jl'
@@ -21,6 +22,8 @@
 #     julia -t1 --project scripts/EColiCore/5.0_fba.features.jl; 
 #     julia -t1 --project scripts/EColiCore/5.1_flags.jl; 
 # done 
+
+julia -t1 --project scripts/EColiCore/3.0_hit.and.down.jl &
 
 # for ((n=0;n<10;n++)); do
 #     julia -t1 --project scripts/EColiCore/3.0_hit.and.down.jl &
