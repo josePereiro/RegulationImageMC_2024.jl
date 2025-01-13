@@ -20,6 +20,7 @@ include("1.99_sim.base.jl")
 #   - serializeflag!(:do) do serialization if called
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: # sample.feasets
 let
     # clear
     empty!(G)
@@ -49,6 +50,7 @@ let
     BLOBS_PER_BATCH = 100000
     DUP_BUFF_SIZE = 10_000_000
 
+    #MARK: ## foreach hd_bb
     # all subsets
     # powerset keep it sorted
     @time for hd_bb in eachbatch(B, "hit.and.down"; sortfun = shuffle!)
@@ -82,6 +84,7 @@ let
         try; 
             lock(hd_bb)
 
+            #MARK: ### for hd_vb
             for hd_vb in hd_bb
                 
                 # control flags
@@ -94,6 +97,7 @@ let
 
                 feaset0 = koset[1:end-1]
                 D = length(feaset0)
+                #MARK: #### sample D times
                 for samplei in 1:D # sample D times
                     feaset = StatsBase.sample(
                         feaset0, rand(1:D);
@@ -127,8 +131,7 @@ let
                         )
                     end
                     
-                    # store feaset
-                    ## check dupplicate
+                    #MARK: ##### check dupplicate
                     feaset_hash = combhash(feaset)
                     if check_duplicate!(dups_buff, feaset_hash)
                         continue # if dupplicate ignore
@@ -146,7 +149,8 @@ let
                             dups_frac = dup_ratio(dups_buff)
                         )
                     end
-    
+                    
+                    #MARK: ##### store feaset
                     ps_vb = rblob!(ps_bb)
                     ps_vb["cargo.feaset", "feaset"] = feaset
                 
@@ -156,6 +160,7 @@ let
             # done_target
             _up_done_count!(S, hd_bb.id, 1; lk = true)
 
+            #MARK: #### serialize!(S)
             serialize!(S; lk = true)
 
         finally
@@ -163,6 +168,7 @@ let
         end
 
         ## capture context
+        #MARK: ### serialize!(ps_bb)
         merge!(ps_bb, script_id, @litecontext)
         
         ps_bb[script_id, "hd_bb_ref"] = hd_bb_ref
@@ -173,6 +179,7 @@ let
     end # for hd_bb
 
     # write globals
+    #MARK: ## serialize!(G)
     merge!(G, script_id, @litecontext)
     G[script_id, "src"] = read(@__FILE__, String)
     serialize!(G; lk = true)

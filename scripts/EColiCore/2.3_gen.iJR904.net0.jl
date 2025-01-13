@@ -11,6 +11,7 @@ include("1.99_sim.base.jl")
 include("2.99_get.net0.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#region # gen.net0
 let
 
     # reset

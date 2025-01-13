@@ -11,7 +11,36 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# PLOT
+#MARK: koset.hist
+let
+    blep0 = G["gen.net0", "net0.blep0.ref"][]
+    h0 = C["koset.hist", "h0"]
+    
+    # Plots
+    "ko.indx", "koset.len"
+    did = "koset.len"
+    # did = "ko.indx"
+    h1 = marginal(h0, did)
+    @time x0s, ws = hist_series(h1, did)
+    si = sortperm(ws)
+    xs = eachindex(x0s)
+    ws = ws[si]
+
+    f = Figure()
+    ax = Axis(f[1,1]; 
+        title = G["gen.net0", "netid"],
+        xlabel = did, 
+        ylabel = "count"
+    )
+    scatter!(ax, xs, ws)
+    barplot!(ax, xs, ws)
+    # ax.xticks = (collect(xs), colids(blep0, x0s))
+    # ax.xticklabelrotation = 45
+    f
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: feasets.hist
 let
     blep0 = G["gen.net0", "net0.blep0.ref"][]
     h0 = C["feasets.hist", "h0"]
@@ -40,7 +69,7 @@ let
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# fba 1D hist
+#MARK: feasets.fba.1D.hist
 let
     h0 = C["fba.sol.hist", "h0"]
     fid = "BIOM/InCmol"
@@ -79,7 +108,7 @@ let
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# corr
+#MARK: feasets.fba.corrs
 let
     h0 = C["fba.sol.hist", "h0"]
     m0, m1 = extrema(keys(h0, "BIOM/InCmol"))

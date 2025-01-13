@@ -16,6 +16,7 @@
 # ## - That is, the simulation is stateful 
 
 # ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#region # gen.net0
 # let
 #     # net0 globals
 #     netid = "ecoli_core_Beg2007"

@@ -17,6 +17,7 @@
 # ## - That is, the simulation is stateful 
 
 # ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#region # gen.net0
 # let
 #     # net0 globals
 #     netid = "iJO1366"

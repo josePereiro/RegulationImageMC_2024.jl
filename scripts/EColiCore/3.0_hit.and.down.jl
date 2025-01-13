@@ -18,6 +18,7 @@ include("3.99_base.jl")
 # - Each ensemble has a fixed enviroment
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: # hit.and.down
 let
     # clear
     empty!(G)
@@ -38,7 +39,7 @@ let
     S["script_ver"] = script_ver
      
     ## >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    # PARAMETERS
+    #MARK: ## Parameters
 
     ## retrieve from net0
     netid = G["gen.net0", "netid"]::String
@@ -76,8 +77,8 @@ let
     end
     iidxs_pool0 = colindex(eblep0, iids_pool0)
 
-    # for each batch
-    for _batchi in 1:1
+    #MARK: ### for each batch
+    for _batchi in 1:80
         @label BATCH_INIT
         
         @show _batchi
@@ -106,7 +107,7 @@ let
             __downfactors = ones(Float64, N)
             _downfactors = ones(Float64, N)
 
-            # for each run
+            #MARK: #### for each run
             for _runi in 1:Int(1e10)
 
                 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -129,7 +130,7 @@ let
                 lb!(opm, lb0 .* _downfactors)
                 ub!(opm, ub0 .* _downfactors)
 
-                # for each step
+                #MARK: ##### for each step
                 for _stepi in 1:Int(1e10)
                     
                     @label STEP_INIT
@@ -202,7 +203,7 @@ let
 
                 end # for _stepi 
                 
-                # store
+                #MARK: #### store blob
                 b = rblob!(hd_bb)
                 b["exit_status"] = exit_status
                 b["cargo.koset", "koset"] = downset
@@ -210,7 +211,8 @@ let
                 
                 # blob control
                 bc = blobcount(hd_bb)
-                # info
+                
+                #MARK: #### info
                 if iszero(mod(bc, 100))
                     @info(script_id,
                         vblobcount = bc,
@@ -228,7 +230,7 @@ let
             # finish
             @label CLOSE_BATCH
             
-            ## capture context
+            #MARK: #### store batch
             merge!(hd_bb, "gen.net0", G[["gen.net0"]])
 
             merge!(hd_bb, script_id, @litecontext)
@@ -243,7 +245,6 @@ let
 
             # write
             serialize!(hd_bb)
-            println("Hi")
             
             serialize!(S; lk = true)
 
@@ -253,7 +254,7 @@ let
 
     end # for _batchi
 
-    # write globals
+    #MARK: ## store globals
     merge!(G, script_id, @litecontext)
     G[script_id, "src"] = read(@__FILE__, String)
     serialize!(G; lk = true)

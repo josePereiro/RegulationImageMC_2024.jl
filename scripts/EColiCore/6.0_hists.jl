@@ -7,15 +7,68 @@
 end
 
 # --.-...- --. -. - -.-..- -- .-..- -. -. 
+
 include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# feasets hist
-# TODO: make this accumulative
+#MARK: # koset hist
 let
-    n_tasks = 40
-    ch_size = 40
+    n_tasks = min(nthreads(), 40)
+    ch_size = min(nthreads(), 40)
+    
+    # clear
+    h0_ref = blobio!(C, 
+        "koset.hist",
+        "h0", 
+        :setser!, 
+    ) do
+
+        bbch = eachbatch(B, "hit.and.down"; 
+            n_tasks = 1, ch_size
+        )
+        
+        tasks = map(1:n_tasks) do _
+            @spawn let
+                _h0 = NDHistogram(
+                    "koset.len" => 0:1000,
+                    "ko.indx" => 0:1000,
+                )
+                bb_count = 0
+                for bb in bbch
+                    @show (bb.id, threadid())
+                    islocked(bb) && continue
+
+                    for b in bb
+                        get(b, "flags", "duplicate.flag", true) && continue
+                        koset = b["cargo.koset", "koset"]
+                        koset_len = length(koset)
+                        # @show feaset
+                        for idx in koset
+                            count!(_h0, (koset_len, idx), 1)
+                        end
+                    end # for b
+
+                    bb_count += 1
+                    bb_count < Inf || break
+                end # for bb
+                return _h0
+            end # @spawn let
+        end # map task
+        
+        @show length(tasks)
+        return merge(map(fetch, tasks))
+
+    end # blobio!
+    @show h0_ref
+    return nothing
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: # feasets hist
+let
+    n_tasks = min(nthreads(), 40)
+    ch_size = min(nthreads(), 40)
     
     # clear
     h0_ref = blobio!(C, 
@@ -66,7 +119,7 @@ end
 
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-# fba.v hist
+#MARK: # fba.v hist
 let
     # params
     blep0 = G["gen.net0", "net0.blep0.ref"][]
@@ -87,8 +140,8 @@ let
         end
     end
 
-    n_tasks = 40
-    ch_size = 40
+    n_tasks = min(nthreads(), 40)
+    ch_size = min(nthreads(), 40)
 
     h0_ref = blobio!(C, 
         "fba.sol.hist", 

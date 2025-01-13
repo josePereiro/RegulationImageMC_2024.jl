@@ -8,6 +8,7 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: # set flags
 let
     # globals blobs
     # duplicates

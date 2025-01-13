@@ -10,6 +10,7 @@ include("1.99_sim.base.jl")
 include("2.99_get.net0.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: # gen.net0
 let
     # reset
     empty!(G)
@@ -25,7 +26,7 @@ let
     @show size(net0)
     
     # set exchanges
-    exch_ids = ["EX_glc__D_e"]
+    exch_ids = [extras(net0, "EX_GLC")]
     for id in exch_ids
         bounds!(net0, id, -10.0, 0.0)
     end
