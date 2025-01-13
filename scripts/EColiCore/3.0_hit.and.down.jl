@@ -53,7 +53,7 @@ let
     blep0 = G["gen.net0", "net0.blep0.ref"][]::LEPModel
     lb0, ub0 = lb(blep0), ub(blep0)
     M, N = size(blep0)
-    BLOBS_PER_BATCH = 3000
+    BLOBS_PER_BATCH = 20000
     DUP_BUFF_SIZE = 10_000_000
     
     ## <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -78,7 +78,7 @@ let
     iidxs_pool0 = colindex(eblep0, iids_pool0)
 
     #MARK: ### for each batch
-    for _batchi in 1:80
+    for _batchi in 1:100
         @label BATCH_INIT
         
         @show _batchi

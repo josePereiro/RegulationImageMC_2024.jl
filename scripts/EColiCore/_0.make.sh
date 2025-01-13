@@ -14,7 +14,7 @@
 
 # julia -t10 --project scripts/EColiCore/2.3_gen.iJR904.net0.jl &
 # for ((n=0;n<3;n++)); do
-#     julia -t1 --project scripts/EColiCore/3.0_hit.and.down.jl; 
+#     julia -t1 --project scripts/EColiCore/3.0_hit.and.down.jl &; 
 #     julia -t1 --project scripts/EColiCore/3.1_flags.jl; 
 #     julia -t1 --project scripts/EColiCore/4.0_sample.feasets.jl; 
 #     julia -t1 --project scripts/EColiCore/4.1_flags.jl; 
