@@ -32,7 +32,7 @@ let
             @spawn let
                 _h0 = NDHistogram(
                     "koset.len" => 0:1000,
-                    "ko.indx" => 0:1000,
+                    # "ko.indx" => 0:1000,
                 )
                 bb_count = 0
                 for bb in bbch
@@ -44,9 +44,10 @@ let
                         koset = b["cargo.koset", "koset"]
                         koset_len = length(koset)
                         # @show feaset
-                        for idx in koset
-                            count!(_h0, (koset_len, idx), 1)
-                        end
+                        # for idx in koset
+                            # count!(_h0, (koset_len, idx), 1)
+                        # end
+                        count!(_h0, (koset_len,), 1)
                     end # for b
 
                     bb_count += 1

@@ -17,7 +17,6 @@ let
     h0 = C["koset.hist", "h0"]
     
     # Plots
-    "ko.indx", "koset.len"
     did = "koset.len"
     # did = "ko.indx"
     h1 = marginal(h0, did)
