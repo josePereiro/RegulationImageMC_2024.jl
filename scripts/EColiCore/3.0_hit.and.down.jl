@@ -78,7 +78,7 @@ let
     iidxs_pool0 = colindex(eblep0, iids_pool0)
 
     #MARK: ### for each batch
-    for _batchi in 1:100
+    for _batchi in 1:10
         @label BATCH_INIT
         
         @show _batchi
