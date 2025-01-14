@@ -23,7 +23,7 @@
 #     julia -t1 --project scripts/EColiCore/5.1_flags.jl; 
 # done 
 
-julia -t1 --project scripts/EColiCore/3.0_hit.and.down.jl &
+# julia -t1 --project scripts/EColiCore/3.0_hit.and.down.jl &
 
 # for ((n=0;n<10;n++)); do
 #     julia -t1 --project scripts/EColiCore/3.0_hit.and.down.jl &
