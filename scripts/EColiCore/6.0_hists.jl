@@ -12,7 +12,8 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-#MARK: # koset hist
+#region: # koset hist
+
 let
     n_tasks = min(nthreads(), 40)
     ch_size = min(nthreads(), 40)
@@ -177,7 +178,10 @@ let
                     @show (bb.id, threadid())
                     for b in bb
                         
-                        sol = b["cargo.fba", "sol"]::Vector{Float64}
+                        # sol = b["cargo.fba", "sol"]::Vector{Float64}
+                        sol = b["cargo.fba.max.v2", "sol"]::Vector{Float64}
+                        status = b["cargo.fba.max.v2", "status"]
+                        @show status
                         isempty(sol) && continue
 
                         InCmol = abs(6 * sol[_INDEX_MAP["EX_GLC"]])

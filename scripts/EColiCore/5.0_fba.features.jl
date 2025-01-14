@@ -77,6 +77,7 @@ let
             ps_bb_ref = blobyref(ps_bb)
             
             # Check already done
+            #TODO: fix first time error
             if _check_done_count!(S, ps_bb.id, done_target; lk = true)
                 @info "DONE"
                 continue
@@ -91,9 +92,13 @@ let
 
             # @show ps_bb
             #MARK: ### for (bi, ps_b)
+            _info_t = -Inf
+            _info_frec = 10 # seconds
             for (bi, ps_b) in enumerate(ps_bb)
+
                 # info
-                iszero(mod(bi, 100)) &&
+                #MARK: #### INFO
+                if (time() - _info_t) > _info_frec
                     println(
                         "bi: ", bi, "/", ps_bc,
                         " [",
@@ -101,7 +106,8 @@ let
                         " thid: ", threadid(),
                         "]"
                     )
-
+                    _info_t = time()
+                end
                 # control flags
                 #MARK: #### control flags
                 get(ps_b, "flags", "duplicate.flag", false)  && continue
@@ -137,9 +143,10 @@ let
                     ub!(opm, id, min(obj + (obj * fix_delta), u))
                     
                     sol = solution(opm)
-                    op_status = "KO"
+                    op_status = "OK"
 
                 catch err
+                    @show err
                     op_status = "ERR.max.fba"
                 end 
     
@@ -162,9 +169,10 @@ let
                     ub!(opm, id, min(obj + (obj * fix_delta), u))
                     
                     sol = solution(opm)
-                    op_status = "KO"
+                    op_status = "OK"
 
                 catch err
+                    @show err
                     op_status = "ERR.min.glc"
                 end 
     
@@ -181,9 +189,10 @@ let
                     optimize!(opm)
 
                     sol = solution(opm)
-                    op_status = "KO"
+                    op_status = "OK"
 
                 catch err
+                    @show err
                     op_status = "ERR.min.v2"
                 end 
     
@@ -200,9 +209,10 @@ let
                     optimize!(opm)
 
                     sol = solution(opm)
-                    op_status = "KO"
+                    op_status = "OK"
 
                 catch err
+                    @show err
                     op_status = "ERR.max.v2"
                 end 
     
@@ -230,7 +240,6 @@ let
             unlock(ps_bb)
             isnothing(ff_bb) || unlock(ff_bb)
         end
-
     end # for ps_bb
 
     # write globals

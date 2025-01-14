@@ -12,7 +12,15 @@ end
 include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
-# --.-...- --. -. - -.-..- -- .-..- -. -. 
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+# TODO/TAI
+# Implement
+# - bbid("prefix", bb) return prefix.bb_suffix
+# - bbid(bb, "suffix") return bb_prefix.suffix
+# - bbid(bb1, bb2) return bb_prefix.bb_suffix
+
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
 let
     net0 = pull_net("ecoli_core")
     solver = QUAD_LP_SOLVER

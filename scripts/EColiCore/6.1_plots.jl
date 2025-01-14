@@ -11,6 +11,36 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+let
+    _bb = B[r"\Afba.feasures"][]
+    # _sol = ["cargo.fba.max.v2", "sol"] 
+    f = Figure()
+    ax = Axis(f[1,1])
+    
+    for _b in eachblob(_bb)
+        
+        frame = "cargo.fba.max.biom"
+        sol = _b[frame, "sol"]
+        scatter!(ax, eachindex(sol), sol; label = frame)
+        
+        frame = "cargo.fba.min.glc"
+        sol = _b[frame, "sol"]
+        scatter!(ax, eachindex(sol), sol; label = frame)
+        
+        frame = "cargo.fba.max.v2"
+        sol = _b[frame, "sol"]
+        scatter!(ax, eachindex(sol), sol; label = frame)
+        
+        
+        frame = "cargo.fba.min.v2"
+        sol = _b[frame, "sol"]
+        scatter!(ax, eachindex(sol), sol; label = frame)
+        break
+    end
+    f
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
 #MARK: koset.hist
 let
     blep0 = G["gen.net0", "net0.blep0.ref"][]
@@ -71,6 +101,7 @@ end
 #MARK: feasets.fba.1D.hist
 let
     h0 = C["fba.sol.hist", "h0"]
+    return h0
     fid = "BIOM/InCmol"
     m0, m1 = extrema(keys(h0, fid))
     h1 = filter(h0) do v, w
