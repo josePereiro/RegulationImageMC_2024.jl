@@ -17,12 +17,19 @@ let
         islocked(bb) && continue
         lock(bb) do
             @show bb.id
-
             for b in bb
                 flag = get!(b, "flags", "sol.empty.flag", false)
-                sol = b["cargo.fba", "sol"] 
-                flag = flag || isempty(sol)
-                b["flags", "sol.empty.flag"] = flag
+                for cargo_frame in [
+                        "cargo.fba.max.biom",
+                        "cargo.fba.min.glc",
+                        "cargo.fba.max.v2",
+                        "cargo.fba.min.v2",
+                    ]
+                    flag && break
+                    sol = b[cargo_frame, "sol"] 
+                    flag = flag || isempty(sol)
+                    b["flags", "sol.empty.flag"] = flag
+                end
                 flag ? (empty_count += 1) : (nonempty_count += 1)
             end
 

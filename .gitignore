@@ -3,7 +3,7 @@ _*/
 /dev
 /figures
 /plots
-/data
+/data*
 /notebooks
 log.txt
 *log.txt

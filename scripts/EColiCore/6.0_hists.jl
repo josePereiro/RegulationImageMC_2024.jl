@@ -12,7 +12,7 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-#region: # koset hist
+#MARK: # koset hist
 
 let
     n_tasks = min(nthreads(), 40)
@@ -33,7 +33,7 @@ let
             @spawn let
                 _h0 = NDHistogram(
                     "koset.len" => 0:1000,
-                    # "ko.indx" => 0:1000,
+                    "ko.indx" => 0:1000,
                 )
                 bb_count = 0
                 for bb in bbch
@@ -45,10 +45,10 @@ let
                         koset = b["cargo.koset", "koset"]
                         koset_len = length(koset)
                         # @show feaset
-                        # for idx in koset
-                            # count!(_h0, (koset_len, idx), 1)
-                        # end
-                        count!(_h0, (koset_len,), 1)
+                        for idx in koset
+                            count!(_h0, (koset_len, idx), 1)
+                        end
+                        # count!(_h0, (koset_len,), 1)
                     end # for b
 
                     bb_count += 1
@@ -134,6 +134,14 @@ let
             ] if hascolid(blep0, extras(net0, eid))
     )
 
+    # cargo_frame in [
+    #     "cargo.fba.max.biom",
+    #     "cargo.fba.min.glc",
+    #     "cargo.fba.max.v2",
+    #     "cargo.fba.min.v2",
+    # ]
+    cargo_frame = "cargo.fba.max.v2"
+
     function _getsol(sol, id)
         try
             return sol[_INDEX_MAP[id]]
@@ -179,9 +187,8 @@ let
                     for b in bb
                         
                         # sol = b["cargo.fba", "sol"]::Vector{Float64}
-                        sol = b["cargo.fba.max.v2", "sol"]::Vector{Float64}
-                        status = b["cargo.fba.max.v2", "status"]
-                        @show status
+                        sol = b[cargo_frame, "sol"]::Vector{Float64}
+                        # status = b[cargo_frame, "status"]
                         isempty(sol) && continue
 
                         InCmol = abs(6 * sol[_INDEX_MAP["EX_GLC"]])

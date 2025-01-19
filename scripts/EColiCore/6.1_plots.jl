@@ -11,6 +11,7 @@ include("0.0_proj.jl")
 include("1.99_sim.base.jl")
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: DEV
 let
     _bb = B[r"\Afba.feasures"][]
     # _sol = ["cargo.fba.max.v2", "sol"] 
@@ -41,7 +42,7 @@ let
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-#MARK: koset.hist
+#MARK: koset.hist.len
 let
     blep0 = G["gen.net0", "net0.blep0.ref"][]
     h0 = C["koset.hist", "h0"]
@@ -61,23 +62,21 @@ let
         xlabel = did, 
         ylabel = "count"
     )
-    scatter!(ax, xs, ws)
-    barplot!(ax, xs, ws)
+    scatter!(ax, xs, ws ./ xs)
+    barplot!(ax, xs, ws ./ xs)
     # ax.xticks = (collect(xs), colids(blep0, x0s))
     # ax.xticklabelrotation = 45
     f
 end
 
 ## --.-...- --. -. - -.-..- -- .-..- -. -. 
-#MARK: feasets.hist
+#MARK: koset.hist.ko.indx
 let
     blep0 = G["gen.net0", "net0.blep0.ref"][]
-    h0 = C["feasets.hist", "h0"]
+    h0 = C["koset.hist", "h0"]
     
     # Plots
-    "ko.indx", "feaset.len"
-    did = "feaset.len"
-    # did = "ko.indx"
+    did = "ko.indx"
     h1 = marginal(h0, did)
     @time x0s, ws = hist_series(h1, did)
     si = sortperm(ws)
@@ -92,8 +91,40 @@ let
     )
     scatter!(ax, xs, ws)
     barplot!(ax, xs, ws)
-    # ax.xticks = (collect(xs), colids(blep0, x0s))
-    # ax.xticklabelrotation = 45
+    ax.xticks = (collect(xs), colids(blep0, x0s))
+    ax.xticklabelrotation = 45
+    f
+end
+
+## --.-...- --. -. - -.-..- -- .-..- -. -. 
+#MARK: feasets.hist
+let
+    blep0 = G["gen.net0", "net0.blep0.ref"][]
+    h0 = C["feasets.hist", "h0"]
+    
+    # Plots
+    # "ko.indx", "feaset.len"
+    did = "feaset.len"
+    # did = "ko.indx"
+    h1 = marginal(h0, did)
+    @time x0s, ws = hist_series(h1, did)
+    si = sortperm(ws)
+    xs = eachindex(x0s)
+    ws = ws[si]
+
+    f = Figure()
+    ax = Axis(f[1,1]; 
+        title = G["gen.net0", "netid"],
+        xlabel = did, 
+        ylabel = "count"
+    )
+
+    # normalize
+    ws = ws ./ xs
+    scatter!(ax, xs, ws)
+    barplot!(ax, xs, ws)
+    ax.xticks = (collect(xs), colids(blep0, x0s))
+    ax.xticklabelrotation = 45
     f
 end
 
@@ -101,7 +132,7 @@ end
 #MARK: feasets.fba.1D.hist
 let
     h0 = C["fba.sol.hist", "h0"]
-    return h0
+
     fid = "BIOM/InCmol"
     m0, m1 = extrema(keys(h0, fid))
     h1 = filter(h0) do v, w
@@ -141,12 +172,14 @@ end
 #MARK: feasets.fba.corrs
 let
     h0 = C["fba.sol.hist", "h0"]
-    m0, m1 = extrema(keys(h0, "BIOM/InCmol"))
+    m0, m1 = extrema(abs, keys(h0, "EX_GLC"))
     @show m0, m1
     h1 = filter(h0) do v, w
-        biom = v[dimindex(h0, "BIOM")]
-        biom > m1 * 0.0 || return false
-        biom < m1 * 0.9 || return false
+        val = v[dimindex(h0, "EX_GLC")]
+        abs(val) > m1 * 0.98 || return false
+        abs(val) < m1 * 1.02 || return false
+        val = v[dimindex(h0, "BIOM")]
+        abs(val) > 1e-4 || return false
         return true
     end
     @show length(h1)
@@ -154,7 +187,7 @@ let
     # Plots
     # "EX_O2", "EX_CO2", "EX_GLC", "EX_NH4", "EX_GLU", "BIOM", "ATPM"
     # id1 = "BIOM/InCmol"
-    id1 = "EX_O2"
+    id1 = "BIOM"
     # h1 = marginal(h0, id1)
     # h2 = rebin(h1, id1 => -500:0.001:500)
     h2=h1
@@ -162,7 +195,7 @@ let
     @show length(x1s)
     # @time x1s, w1s = hist_series(h1, id1)
 
-    id2 = "BIOM"
+    id2 = "EX_NH4"
     # h2 = rebin(h1, id2 => -500:0.001:500)
     h2=h1
     x2s = collect(keys(h2, id2))

@@ -10,7 +10,7 @@
 # julia -t4 --project scripts/EColiCore/2.1_gen.ecoli_core.net0.jl
 
 # sim tools
-# julia -t45 --project scripts/EColiCore/6.0_hists.jl &
+# julia -t20 --project scripts/EColiCore/6.0_hists.jl &
 # ./scripts/EColiCore/_0.make.sh
 
 # julia -t10 --project scripts/EColiCore/2.3_gen.iJR904.net0.jl &
