@@ -138,7 +138,7 @@ let
     h1 = filter(h0) do v, w
         biom = v[dimindex(h0, fid)]
         biom > m1 * 0.0 || return false
-        biom < m1 * 0.98 || return false
+        # biom < m1 * 0.98 || return false
         return true
     end
 
@@ -186,20 +186,28 @@ let
 
     # Plots
     # "EX_O2", "EX_CO2", "EX_GLC", "EX_NH4", "EX_GLU", "BIOM", "ATPM"
-    # id1 = "BIOM/InCmol"
-    id1 = "BIOM"
-    # h1 = marginal(h0, id1)
-    # h2 = rebin(h1, id1 => -500:0.001:500)
-    h2=h1
-    x1s = collect(keys(h2, id1))
-    @show length(x1s)
-    # @time x1s, w1s = hist_series(h1, id1)
+    # id1 = "EX_O2"
+    id1 ="EX_CO2"
+    # id2 = "BIOM/InCmol"
+    id2 = "feaset.len"
+    h2 = rebin(h1, 
+        id1 => -500:2.5:500,
+        # id1 => support(h1, id1),
+        id2 => -500:0.001:500,
+        # id2 => support(h1, id2),
+    )
+    # h2 = h1
 
-    id2 = "EX_NH4"
-    # h2 = rebin(h1, id2 => -500:0.001:500)
-    h2=h1
+    ws = collect(values(h2))
+    sidx = sortperm(ws)
+    ws = ws[sidx]
+
+    x1s = collect(keys(h2, id1))
+    x1s = x1s[sidx]
+    @show length(x1s)
+    
     x2s = collect(keys(h2, id2))
-    # @time x2s, w2s = hist_series(h2, id2)
+    x2s = x2s[sidx]
     @show length(x2s)
 
     f = Figure()
@@ -207,8 +215,17 @@ let
         title = G["gen.net0", "netid"],
         xlabel = id1, 
         ylabel = id2, 
+        # limits = (0.0, 10.3, nothing, nothing)
     )
-    scatter!(ax, x1s, x2s)
-    # barplot!(ax, xs, ws)
+    p = scatter!(ax, x1s, x2s;
+        # color = log.(ws ./ maximum(ws)),
+        color = log.(ws),
+        colormap = :viridis,  # Mappa colori adatta a istogrammi
+        # marker = "rect",
+        markersize = 30
+    )
+    
+    Colorbar(f[1, 2], p, label = "~ log(count)")
     f
 end
+

@@ -141,6 +141,7 @@ let
     #     "cargo.fba.min.v2",
     # ]
     cargo_frame = "cargo.fba.max.v2"
+    # cargo_frame = "cargo.fba.max.biom"
 
     function _getsol(sol, id)
         try
@@ -180,12 +181,22 @@ let
                     "EX_GLU/InCmol" => -1000.0:0.001:1000.0,
                     "BIOM/InCmol"   => -1000.0:0.0001:1000.0,
                     "ATPM/InCmol"   => -1000.0:0.001:1000.0,
+                    "feaset.len"   => -1000:1:1000,
                 )
                 
+                rc = RefCacher()
                 for bb in bbch
+                    ps_bb = rc[bb["fba.feasures", "ps_bb_ref"]]
+
                     @show (bb.id, threadid())
                     for b in bb
+
+                        # feaset blob
+                        ps_b = blob(ps_bb, b.uuid)
+                        feaset = ps_b["cargo.feaset", "feaset"]
+                        feaset_len = length(feaset)
                         
+                        # fba.features blob
                         # sol = b["cargo.fba", "sol"]::Vector{Float64}
                         sol = b[cargo_frame, "sol"]::Vector{Float64}
                         # status = b[cargo_frame, "status"]
@@ -209,6 +220,7 @@ let
                                     _getsol(sol, "EX_GLU")/InCmol,
                                     _getsol(sol, "BIOM")/InCmol,
                                     _getsol(sol, "ATPM")/InCmol,
+                                    feaset_len
                                 ), 
                                 1
                             )
